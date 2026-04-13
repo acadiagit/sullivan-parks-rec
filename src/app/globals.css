@@ -1,0 +1,83 @@
+/* src/app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Sullivan brand palette ── */
+:root {
+  --blue:       #1565C0;
+  --blue-mid:   #1E7DD4;
+  --blue-lt:    #4FA3E8;
+  --teal:       #40BCD8;
+  --teal-lt:    #7AD5E8;
+  --green:      #27A844;
+  --green-lt:   #6DCF85;
+  --sun:        #F5C843;
+  --sun-lt:     #FAE08A;
+  --navy:       #0A2342;
+  --cream:      #F8FAFF;
+  --cream-dk:   #EAF0FA;
+  --sidebar-w:  256px;
+}
+
+@layer base {
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-nunito), 'Nunito', sans-serif;
+    background-color: var(--cream);
+    color: #1a1a2e;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-playfair), 'Playfair Display', Georgia, serif;
+    line-height: 1.25;
+  }
+}
+
+@layer components {
+  /* Gold-sun divider */
+  .sun-rule {
+    border: none;
+    height: 2px;
+    background: linear-gradient(to right, var(--sun), transparent);
+  }
+
+  /* Card hover lift */
+  .card-lift {
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .card-lift:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(21,101,192,0.14);
+  }
+
+  /* Active sidebar link */
+  .nav-active {
+    background: rgba(245,200,67,0.18);
+    border-left: 3px solid var(--sun);
+  }
+
+  /* Small caps label */
+  .section-label {
+    font-family: var(--font-nunito), sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--teal-lt);
+  }
+}
+
+/* Desktop sidebar offset */
+@media (min-width: 1024px) {
+  .main-offset { margin-left: var(--sidebar-w); }
+}
+
+/* Mobile menu backdrop */
+.overlay-backdrop {
+  backdrop-filter: blur(2px);
+  background: rgba(10,35,66,0.55);
+}
+/* end of file */
