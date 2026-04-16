@@ -8,15 +8,35 @@ const lbl = 'block text-xs font-semibold text-gray-600 mb-1'
 const categories = ['Volunteer','Recreation','Programs','Community','General']
 
 function slugify(s) { return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') }
-function toLocal(ts) { return ts ? new Date(ts).toISOString().slice(0,16) : '' }
+
+// Convert datetime-local string ("2026-05-09T09:00") to UTC ISO
+// treating it as Eastern time (UTC-4 EDT / UTC-5 EST)
+function easternToUTC(localStr) {
+  if (!localStr) return null
+  // Determine EST vs EDT offset based on month
+  const dt = new Date(localStr)
+  const month = dt.getMonth() + 1 // 1-12
+  // EDT (UTC-4): March-November, EST (UTC-5): Dec-Feb (approximate)
+  const offset = (month >= 3 && month <= 11) ? 4 : 5
+  return new Date(dt.getTime() + offset * 60 * 60 * 1000).toISOString()
+}
+
+// Convert UTC timestamp back to Eastern for display in datetime-local input
+function utcToEastern(ts) {
+  if (!ts) return ''
+  const dt = new Date(ts)
+  const month = dt.getMonth() + 1
+  const offset = (month >= 3 && month <= 11) ? 4 : 5
+  return new Date(dt.getTime() - offset * 60 * 60 * 1000).toISOString().slice(0, 16)
+}
 
 export default function EventForm({ row, table, onSave, onCancel }) {
   const [form, setForm] = useState({
     title:       row?.title       ?? '',
     slug:        row?.slug        ?? '',
     description: row?.description ?? '',
-    start_at:    toLocal(row?.start_at) ?? '',
-    end_at:      toLocal(row?.end_at)   ?? '',
+    start_at:    utcToEastern(row?.start_at),
+    end_at:      utcToEastern(row?.end_at),
     location:    row?.location    ?? '',
     category:    row?.category    ?? 'General',
     published:   row?.published   ?? true,
@@ -29,10 +49,8 @@ export default function EventForm({ row, table, onSave, onCancel }) {
     const payload = {
       ...form,
       slug:     form.slug || slugify(form.title),
-      // datetime-local gives "2026-05-09T11:00" — new Date() treats it as local time
-      // .toISOString() converts to proper UTC for storage
-      start_at: form.start_at ? new Date(form.start_at).toISOString() : null,
-      end_at:   form.end_at   ? new Date(form.end_at).toISOString()   : null,
+      start_at: easternToUTC(form.start_at),
+      end_at:   easternToUTC(form.end_at),
     }
     if (row?.id) { await supabase.from(table).update(payload).eq('id', row.id) }
     else          { await supabase.from(table).insert(payload) }

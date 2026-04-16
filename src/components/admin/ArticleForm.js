@@ -2,6 +2,8 @@
 'use client'
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { ImageIcon } from 'lucide-react'
+import ImagePicker from './ImagePicker'
 
 const inp = 'w-full border border-[#EAF0FA] rounded-lg px-3 py-2 text-sm text-[#0A2342] bg-white focus:outline-none focus:ring-2 focus:ring-[#1565C0] transition'
 const lbl = 'block text-xs font-semibold text-gray-600 mb-1'
@@ -17,7 +19,12 @@ export default function ArticleForm({ row, table, onSave, onCancel }) {
     published: row?.published ?? false,
   })
   const [saving, setSaving] = useState(false)
+  const [showPicker, setShowPicker] = useState(false)
   const set = (k,v) => setForm(f=>({...f,[k]:v}))
+
+  function insertImage(html) {
+    setForm(f => ({ ...f, body: f.body + '\n' + html }))
+  }
 
   async function save(e) {
     e.preventDefault(); setSaving(true)
@@ -39,7 +46,20 @@ export default function ArticleForm({ row, table, onSave, onCancel }) {
         <div><label className={lbl}>Author</label><input className={inp} value={form.author} onChange={e=>set('author',e.target.value)}/></div>
       </div>
       <div><label className={lbl}>Excerpt (shown on home page)</label><textarea rows={2} className={inp+' resize-none'} value={form.excerpt} onChange={e=>set('excerpt',e.target.value)}/></div>
-      <div><label className={lbl}>Body (HTML or plain text)</label><textarea rows={8} className={inp+' resize-none font-mono text-xs'} placeholder="<p>Article content here…</p>" value={form.body} onChange={e=>set('body',e.target.value)}/></div>
+      <div>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className={lbl} style={{margin:0}}>Body (HTML or plain text)</label>
+          <button type="button" onClick={() => setShowPicker(true)}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold
+                             text-[#1565C0] hover:text-[#0A2342] transition-colors">
+            <ImageIcon size={13}/> Insert image
+          </button>
+        </div>
+        <textarea rows={8} className={inp+' resize-none font-mono text-xs'}
+                  placeholder="<p>Article content here…</p>"
+                  value={form.body} onChange={e=>set('body',e.target.value)}/>
+      </div>
+      {showPicker && <ImagePicker onInsert={insertImage} onClose={() => setShowPicker(false)}/>}
       <label className="flex items-center gap-2 text-sm font-semibold text-gray-600 cursor-pointer">
         <input type="checkbox" checked={form.published} onChange={e=>set('published',e.target.checked)} className="w-4 h-4 accent-[#1565C0]"/>
         Published (sets published_at to now if new)
