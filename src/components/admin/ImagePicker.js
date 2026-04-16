@@ -2,9 +2,9 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
+import { BUCKET, SUPABASE_URL } from '@/lib/config'
 import { Image as ImageIcon, Upload, Link, X, Check } from 'lucide-react'
 
-const BUCKET = 'park-media'
 
 // Public folder images (pre-loaded)
 const PUBLIC_IMAGES = [
@@ -33,7 +33,7 @@ export default function ImagePicker({ onInsert, onClose }) {
   }
 
   function getStorageUrl(name) {
-    return `https://zkdfqpyoleacgwntmzgy.supabase.co/storage/v1/object/public/${BUCKET}/${name}`
+    return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${name}`
   }
 
   function insertImage(url, alt = '') {

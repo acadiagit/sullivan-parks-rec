@@ -1,15 +1,18 @@
 // src/app/events/page.js
 import { supabase } from '@/lib/supabase'
+import { TZ } from '@/lib/config'
 import { CalendarDays, MapPin, Clock, Tag } from 'lucide-react'
 
 export const metadata = { title: 'Events' }
 export const revalidate = 60
 
 async function getEvents() {
+  try {
   const { data, error } = await supabase
     .from('events').select('*').eq('published', true).order('start_at')
   if (error) { console.error(error); return [] }
-  return data
+  return data ?? []
+  } catch(e) { console.error(e); return [] }
 }
 
 const catColors = {
@@ -19,7 +22,6 @@ const catColors = {
   Community:  'bg-yellow-100 text-yellow-800',
 }
 
-const TZ = 'America/New_York'
 
 function formatDate(ts) {
   return new Date(ts).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric', timeZone: TZ })

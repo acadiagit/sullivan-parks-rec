@@ -1,6 +1,51 @@
-.DS_Store
-node_modules/
-.next/
+# ── Secrets & environment ────────────────────────────────────
+.env
+.env.*
 .env.local
 .env*.local
+*.env
+.envrc
+
+# ── Backup & scratch files ───────────────────────────────────
+*.bck
+*.bak
+*.backup
+*.tmp
+*.swp
+*.rtf
+*.log
+
+# ── macOS ────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# ── Node ─────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Next.js ──────────────────────────────────────────────────
+.next/
 out/
+build/
+dist/
+
+# ── Vercel ───────────────────────────────────────────────────
+.vercel
+
+# ── Editor ───────────────────────────────────────────────────
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ── Misc ─────────────────────────────────────────────────────
+*.pem
+*.key
+*.cert
+# end of file

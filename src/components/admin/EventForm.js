@@ -2,6 +2,7 @@
 'use client'
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { TZ } from '@/lib/config'
 
 const inp = 'w-full border border-[#EAF0FA] rounded-lg px-3 py-2 text-sm text-[#0A2342] bg-white focus:outline-none focus:ring-2 focus:ring-[#1565C0] transition'
 const lbl = 'block text-xs font-semibold text-gray-600 mb-1'
@@ -9,25 +10,19 @@ const categories = ['Volunteer','Recreation','Programs','Community','General']
 
 function slugify(s) { return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') }
 
-// Convert datetime-local string ("2026-05-09T09:00") to UTC ISO
-// treating it as Eastern time (UTC-4 EDT / UTC-5 EST)
+// Append Eastern offset directly to the datetime-local string so parsing is unambiguous
 function easternToUTC(localStr) {
   if (!localStr) return null
-  // Determine EST vs EDT offset based on month
-  const dt = new Date(localStr)
-  const month = dt.getMonth() + 1 // 1-12
-  // EDT (UTC-4): March-November, EST (UTC-5): Dec-Feb (approximate)
-  const offset = (month >= 3 && month <= 11) ? 4 : 5
-  return new Date(dt.getTime() + offset * 60 * 60 * 1000).toISOString()
+  const month = parseInt(localStr.slice(5, 7), 10)
+  const offset = (month >= 3 && month <= 11) ? '-04:00' : '-05:00'  // EDT / EST
+  return new Date(localStr + offset).toISOString()
 }
 
-// Convert UTC timestamp back to Eastern for display in datetime-local input
+// Convert UTC timestamp to Eastern for the datetime-local input
 function utcToEastern(ts) {
   if (!ts) return ''
-  const dt = new Date(ts)
-  const month = dt.getMonth() + 1
-  const offset = (month >= 3 && month <= 11) ? 4 : 5
-  return new Date(dt.getTime() - offset * 60 * 60 * 1000).toISOString().slice(0, 16)
+  const s = new Date(ts).toLocaleString('sv-SE', { timeZone: TZ })
+  return s.slice(0, 16).replace(' ', 'T')
 }
 
 export default function EventForm({ row, table, onSave, onCancel }) {

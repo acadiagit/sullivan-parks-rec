@@ -2,7 +2,7 @@
 'use client'
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { ImageIcon } from 'lucide-react'
+import { Image as LucideImage } from 'lucide-react'
 import ImagePicker from './ImagePicker'
 
 const inp = 'w-full border border-[#EAF0FA] rounded-lg px-3 py-2 text-sm text-[#0A2342] bg-white focus:outline-none focus:ring-2 focus:ring-[#1565C0] transition'
@@ -50,9 +50,10 @@ export default function ArticleForm({ row, table, onSave, onCancel }) {
         <div className="flex items-center justify-between mb-1.5">
           <label className={lbl} style={{margin:0}}>Body (HTML or plain text)</label>
           <button type="button" onClick={() => setShowPicker(true)}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold
-                             text-[#1565C0] hover:text-[#0A2342] transition-colors">
-            <ImageIcon size={13}/> Insert image
+                  className="inline-flex items-center gap-1.5 bg-[#1565C0] text-white
+                             text-xs font-semibold px-3 py-1.5 rounded-full
+                             hover:bg-[#0A2342] transition-colors shadow-sm">
+            <LucideImage size={13}/> Insert image
           </button>
         </div>
         <textarea rows={8} className={inp+' resize-none font-mono text-xs'}
