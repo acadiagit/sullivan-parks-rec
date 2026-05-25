@@ -9,7 +9,7 @@ export const revalidate = 60
 async function getEvents() {
   try {
   const { data, error } = await supabase
-    .from('events').select('*').eq('published', true).order('start_at', { ascending: false })
+    .from('events').select('*').eq('published', true).gte('start_at', new Date(new Date().getFullYear(), 0, 1).toISOString()).order('start_at', { ascending: true })
   if (error) { console.error(error); return [] }
   return data ?? []
   } catch(e) { console.error(e); return [] }
