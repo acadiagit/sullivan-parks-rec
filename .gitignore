@@ -49,3 +49,4 @@ dist/
 *.key
 *.cert
 # end of file
+recoverycodes.txt

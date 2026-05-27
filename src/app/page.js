@@ -24,6 +24,13 @@ const sections = [
   { href:'/projects', label:'Projects', Icon:FolderKanban, bg:'bg-[#0A2342]', textColor:'text-white', iconBg:'',              desc:'Capital improvements underway'       },
 ]
 
+const missionPoints = [
+  'The committee will promote accessible recreational opportunities and use of town parks and facilities for citizens of all ages.',
+  'The committee will monitor, improve and maintain the recreational assets belonging to the Town of Sullivan.',
+  'The committee will collaborate with other organizations and providers to enhance recreational programs offered by the town.',
+  'The committee will be responsible for oversight of the Sullivan Daze Planning Committee.',
+]
+
 const catBadge = {
   Volunteer:  'bg-green-100 text-green-800',
   Recreation: 'bg-teal-100  text-teal-800',
@@ -43,14 +50,12 @@ export default async function HomePage() {
 
   return (
     <div>
-      {/* ── HERO ─────────────────────────────────────── */}
-      <section className="relative overflow-hidden min-h-[360px] lg:min-h-[440px] flex items-end"
+      {/* ── HERO (title + full mission) ──────────────── */}
+      <section className="relative overflow-hidden"
                style={{background:'linear-gradient(180deg,#FF7200 0%,#FF9A00 60%,#F8FAFF 100%)'}}>
-        <svg className="absolute bottom-0 left-0 w-full" viewBox="0 0 1200 60" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M0,40 Q200,10 400,40 T800,40 T1200,40 L1200,60 L0,60 Z" fill="#F8FAFF"/>
-        </svg>
         <div className="absolute top-6 right-10 w-40 h-40 rounded-full bg-[#40BCD8] opacity-20" aria-hidden="true"/>
         <div className="absolute top-16 right-28 w-20 h-20 rounded-full bg-[#40BCD8] opacity-15" aria-hidden="true"/>
+
         <div className="relative z-10 px-8 py-12 lg:px-14 lg:py-16 max-w-3xl">
           <div className="mb-5 flex items-center gap-4">
             <Image src="/sullivan-logo.png" alt="Town of Sullivan seal, established 1789"
@@ -59,27 +64,34 @@ export default async function HomePage() {
               Town of Sullivan, Maine
             </p>
           </div>
-          <h1 className="font-playfair text-4xl lg:text-5xl text-black font-bold leading-tight mb-3">
+
+          <h1 className="font-playfair text-4xl lg:text-5xl text-black font-bold leading-tight mb-5">
             Parks &amp; Recreation
           </h1>
-          <p className="text-[#1A1A1A] text-base lg:text-lg max-w-xl leading-relaxed font-medium">
-            It is our mission to provide facilities, spaces and programs that will help
-            to enrich the lives of our residents and visitors.
+
+          <p className="text-[#1A1A1A] text-base lg:text-lg leading-relaxed font-medium mb-5">
+            It is the mission of the Sullivan Parks and Recreation Committee to
+            provide facilities, spaces and programs that will help to enrich the
+            lives of all its residents and visitors.
           </p>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <Link href="/parks" className="inline-flex items-center gap-2 bg-[#0A2342] text-white font-bold text-sm px-5 py-2.5 rounded-full hover:bg-[#1565C0] transition-colors shadow-md">
-              Explore Parks <ArrowRight size={15}/>
-            </Link>
-            <Link href="/events" className="inline-flex items-center gap-2 bg-black/10 text-black font-bold text-sm px-5 py-2.5 rounded-full border-2 border-black/30 hover:bg-black/20 transition-colors">
-              Upcoming Events
-            </Link>
-          </div>
+
+          <ul className="space-y-2.5 text-[#1A1A1A] text-sm lg:text-base leading-relaxed pb-4">
+            {missionPoints.map((line) => (
+              <li key={line} className="flex gap-2">
+                <span className="text-[#0A2342] font-bold mt-0.5">•</span>
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
         </div>
+
+        <svg className="absolute bottom-0 left-0 w-full" viewBox="0 0 1200 60" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0,40 Q200,10 400,40 T800,40 T1200,40 L1200,60 L0,60 Z" fill="#F8FAFF"/>
+        </svg>
       </section>
 
-      {/* ── SECTION CARDS ────────────────────────────── */}
+      {/* ── SECTION CARDS (Parks / Events / Programs / Projects) ── */}
       <section className="px-6 lg:px-10 py-10 max-w-5xl mx-auto">
-        <h2 className="font-playfair text-2xl text-[#0A2342] mb-6">What We Offer</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {sections.map(({ href, label, Icon, bg, textColor, iconBg, desc }) => (
             <Link key={href} href={href} className={`card-lift rounded-2xl p-5 ${bg} flex flex-col gap-3 group`}>
