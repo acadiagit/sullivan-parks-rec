@@ -50,3 +50,13 @@ dist/
 *.cert
 # end of file
 recoverycodes.txt
+
+# Design source files — never ship to production
+public/*.psd
+public/*.psb
+public/*.ai
+public/*.sketch
+public/*.fig
+
+# Local design work that shouldn't deploy
+source-donotpublish/

@@ -1,31 +1,41 @@
 // src/app/admin/login/page.js
+// Path: ~/coworker/parks/src/app/admin/login/page.js
+// Description: Admin sign-in page — magic-link only. No passwords.
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
-import { Lock, Mail } from 'lucide-react'
+import { Mail, CheckCircle2, AlertCircle } from 'lucide-react'
 
 export default function AdminLoginPage() {
-  const router = useRouter()
-  const [email, setEmail]       = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError]       = useState('')
-  const [loading, setLoading]   = useState(false)
+  const [email, setEmail]   = useState('')
+  const [status, setStatus] = useState('idle')  // idle | sending | sent | error
+  const [error, setError]   = useState('')
 
   async function handleLogin(e) {
     e.preventDefault()
-    setLoading(true)
+    setStatus('sending')
     setError('')
 
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+    const { error: authError } = await supabase.auth.signInWithOtp({
+      email: email.trim().toLowerCase(),
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        shouldCreateUser: false,  // only existing users can sign in
+      },
+    })
 
     if (authError) {
-      setError('Invalid email or password. Please try again.')
-      setLoading(false)
+      console.error('Magic link request failed:', authError)
+      setStatus('error')
+      setError(
+        authError.message.toLowerCase().includes('signups not allowed')
+          ? "That email isn't authorized for admin access."
+          : 'Could not send the sign-in link. Please try again.'
+      )
     } else {
-      router.replace('/admin')
+      setStatus('sent')
     }
   }
 
@@ -45,45 +55,57 @@ export default function AdminLoginPage() {
           <p className="text-xs text-gray-400 tracking-widest uppercase mt-0.5">Admin Portal</p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5" htmlFor="email">
-              Email
-            </label>
-            <div className="relative">
-              <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"/>
-              <input id="email" type="email" required autoFocus
-                     className={inp + ' pl-9'}
-                     placeholder="you@sullivanmaine.org"
-                     value={email} onChange={e => setEmail(e.target.value)}/>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5" htmlFor="password">
-              Password
-            </label>
-            <div className="relative">
-              <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"/>
-              <input id="password" type="password" required
-                     className={inp + ' pl-9'}
-                     placeholder="••••••••"
-                     value={password} onChange={e => setPassword(e.target.value)}/>
-            </div>
-          </div>
-
-          {error && (
-            <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-              {error}
+        {status === 'sent' ? (
+          <div className="text-center py-2">
+            <CheckCircle2 size={40} className="text-[#27A844] mx-auto mb-4" strokeWidth={1.5}/>
+            <h2 className="font-playfair text-lg text-[#0A2342] mb-2">Check your email</h2>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              We sent a sign-in link to <strong className="text-[#0A2342]">{email}</strong>.
+              The link expires in 1 hour.
             </p>
-          )}
+            <button
+              type="button"
+              onClick={() => { setStatus('idle'); setEmail('') }}
+              className="text-xs text-[#1565C0] hover:underline mt-5"
+            >
+              Use a different email
+            </button>
+          </div>
+        ) : (
+          <>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5" htmlFor="email">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"/>
+                  <input id="email" type="email" required autoFocus
+                         className={inp + ' pl-9'}
+                         placeholder="you@example.com"
+                         value={email} onChange={e => setEmail(e.target.value)}/>
+                </div>
+              </div>
 
-          <button type="submit" disabled={loading}
-                  className="w-full bg-[#1565C0] text-white font-bold text-sm py-3 rounded-full
-                             hover:bg-[#0A2342] transition-colors disabled:opacity-60 mt-2">
-            {loading ? 'Signing in…' : 'Sign In'}
-          </button>
-        </form>
+              {status === 'error' && (
+                <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 flex items-start gap-1.5">
+                  <AlertCircle size={13} className="mt-0.5 flex-shrink-0"/>
+                  <span>{error}</span>
+                </p>
+              )}
+
+              <button type="submit" disabled={status === 'sending'}
+                      className="w-full bg-[#1565C0] text-white font-bold text-sm py-3 rounded-full
+                                 hover:bg-[#0A2342] transition-colors disabled:opacity-60 mt-2">
+                {status === 'sending' ? 'Sending link…' : 'Send sign-in link'}
+              </button>
+            </form>
+
+            <p className="text-center text-xs text-gray-400 mt-6 leading-relaxed">
+              We'll email you a one-time link. No password required.
+            </p>
+          </>
+        )}
 
         <p className="text-center text-xs text-gray-400 mt-6">
           <a href="/" className="hover:text-[#1565C0] transition-colors">← Back to public site</a>
