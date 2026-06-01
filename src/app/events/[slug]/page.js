@@ -1,86 +1,101 @@
 // src/app/events/[slug]/page.js
-import Link from 'next/link'
-import { notFound } from 'next/navigation'
+// Path: ~/coworker/parks/src/app/events/[slug]/page.js
+// Description: Public event detail page. Renders cover image (if any),
+//              title, date/time/location, short description, and rich body HTML.
+//              Falls back gracefully when newer fields (body, cover_image_url)
+//              are NULL on existing rows that pre-date the Phase 1 migration.
 import { supabase } from '@/lib/supabase'
 import { TZ } from '@/lib/config'
-import { CalendarDays, MapPin, Clock, Tag, ArrowLeft } from 'lucide-react'
+import { notFound } from 'next/navigation'
+import Link from 'next/link'
+import { ArrowLeft, Calendar, MapPin } from 'lucide-react'
 
-export const revalidate = 60
+export const dynamic = 'force-dynamic'
 
-async function getEvent(slug) {
-  const { data, error } = await supabase
-    .from('events')
-    .select('*')
-    .eq('slug', slug)
-    .eq('published', true)
-    .maybeSingle()
-  if (error) { console.error(error); return null }
-  return data
+function formatEastern(ts) {
+  if (!ts) return ''
+  return new Date(ts).toLocaleString('en-US', {
+    timeZone: TZ, dateStyle: 'full', timeStyle: 'short',
+  })
 }
 
 export async function generateMetadata({ params }) {
-  const event = await getEvent(params.slug)
-  if (!event) return { title: 'Event not found' }
+  const { slug } = await params
+  const { data } = await supabase.from('events').select('title, description').eq('slug', slug).single()
+  if (!data) return { title: 'Event — Sullivan Parks & Rec' }
   return {
-    title: event.title,
-    description: event.description ?? undefined,
+    title: `${data.title} — Sullivan Parks & Rec`,
+    description: data.description ?? '',
   }
 }
 
-const catColors = {
-  Volunteer:  'bg-green-100 text-green-800',
-  Recreation: 'bg-teal-100  text-teal-800',
-  Programs:   'bg-blue-100  text-blue-800',
-  Community:  'bg-yellow-100 text-yellow-800',
-}
-
-function formatDate(ts) {
-  return new Date(ts).toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric', timeZone: TZ })
-}
-function formatTime(ts) {
-  return new Date(ts).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', timeZone: TZ })
-}
-
 export default async function EventDetailPage({ params }) {
-  const event = await getEvent(params.slug)
-  if (!event) notFound()
+  const { slug } = await params
+  const { data: event, error } = await supabase
+    .from('events')
+    .select('*')
+    .eq('slug', slug)
+    .single()
+
+  if (error || !event) notFound()
+
+  // Public-side filter: skip archived events (don't 404, just don't show)
+  if (event.archived_at) notFound()
 
   return (
-    <div className="max-w-3xl mx-auto px-6 lg:px-10 py-10">
-      <Link href="/events" className="inline-flex items-center gap-1.5 text-sm text-[#1565C0] hover:underline mb-6">
-        <ArrowLeft size={14}/> All events
-      </Link>
-
-      <div className="flex items-center gap-3 mb-2">
-        <CalendarDays size={28} className="text-[#1565C0]" strokeWidth={1.5}/>
-        <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${catColors[event.category] ?? 'bg-gray-100 text-gray-600'}`}>
-          <Tag size={9}/> {event.category}
-        </span>
-      </div>
-
-      <h1 className="font-playfair text-4xl text-[#0A2342] mb-4">{event.title}</h1>
-
-      <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-600 mb-8">
-        <span className="flex items-center gap-1.5 font-bold text-[#1565C0] font-nunito">
-          <CalendarDays size={14} className="text-[#F5C843]"/> {formatDate(event.start_at)}
-        </span>
-        <span className="flex items-center gap-1.5">
-          <Clock size={14} className="text-[#F5C843]"/>
-          {formatTime(event.start_at)}{event.end_at ? ` – ${formatTime(event.end_at)}` : ''}
-        </span>
-        {event.location && (
-          <span className="flex items-center gap-1.5">
-            <MapPin size={14} className="text-[#F5C843]"/> {event.location}
-          </span>
-        )}
-      </div>
-
-      {event.description && (
-        <div className="bg-white rounded-2xl border border-[#EAF0FA] p-6">
-          <p className="text-gray-700 leading-relaxed whitespace-pre-line">{event.description}</p>
+    <article className="min-h-screen bg-[#F8FAFF]">
+      {/* Cover image — full-bleed banner */}
+      {event.cover_image_url && (
+        <div className="w-full h-56 md:h-80 overflow-hidden bg-[#0A2342]">
+          <img src={event.cover_image_url} alt={event.title}
+               className="w-full h-full object-cover"/>
         </div>
       )}
-    </div>
+
+      <div className="max-w-3xl mx-auto px-4 py-8 md:py-12">
+
+        <Link href="/events" className="inline-flex items-center gap-1.5 text-sm text-[#1565C0] hover:underline mb-4">
+          <ArrowLeft size={14}/> All events
+        </Link>
+
+        <div className="text-[10px] font-bold uppercase tracking-wider text-[#27A844] mb-2">
+          {event.category}
+        </div>
+        <h1 className="font-playfair text-4xl md:text-5xl text-[#0A2342] leading-tight mb-4">
+          {event.title}
+        </h1>
+
+        {event.start_at && (
+          <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+            <Calendar size={15} className="text-[#1565C0]"/>
+            <span>{formatEastern(event.start_at)}{event.end_at && <> → {formatEastern(event.end_at)}</>}</span>
+          </div>
+        )}
+        {event.location && (
+          <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+            <MapPin size={15} className="text-[#1565C0]"/>
+            <span>{event.location}</span>
+          </div>
+        )}
+
+        {event.description && (
+          <p className="text-base text-gray-700 italic mb-6 leading-relaxed">
+            {event.description}
+          </p>
+        )}
+
+        {event.body && (
+          <div className="prose prose-sm md:prose-base max-w-none text-[#0A2342] leading-relaxed"
+               dangerouslySetInnerHTML={{__html: event.body}}/>
+        )}
+
+        {!event.body && !event.cover_image_url && (
+          <p className="text-sm text-gray-400 italic mt-6">
+            More details to come.
+          </p>
+        )}
+      </div>
+    </article>
   )
 }
 // end of file
