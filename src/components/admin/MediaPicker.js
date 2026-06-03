@@ -19,13 +19,17 @@ import {
 // ── Public folder pre-loaded assets ──────────────────────────────────────
 const PUBLIC_ASSETS = {
   image: [
-    { name: 'bike-rodeo.png',    url: '/bike-rodeo.png' },
-    { name: 'Clean-up.png',      url: '/Clean-up.png' },
-    { name: 'sullivan-logo.png', url: '/sullivan-logo.png' },
+    { name: 'bike-rodeo.png',                url: '/bike-rodeo.png' },
+    { name: 'Clean-up.png',                  url: '/Clean-up.png' },
+    { name: 'sullivan-logo.png',             url: '/sullivan-logo.png' },
+    { name: 'Sullivan-Daze-2026-Flyer.png',  url: '/Sullivan-Daze-2026-Flyer.png' },
+    { name: 'qr-sullivan-daze.png',          url: '/qr-sullivan-daze.png' },
   ],
   document: [
     { name: 'Sullivan-Daze-2026-Flyer.pdf', url: '/Sullivan-Daze-2026-Flyer.pdf' },
+    { name: 'Sullivan-Daze-logo.pdf',       url: '/Sullivan-Daze-logo.pdf' },
     { name: 'Bikerodeo-EllsAmerican.pdf',   url: '/Bikerodeo-EllsAmerican.pdf' },
+    { name: 'taunton-bay-camp.pdf',         url: '/taunton-bay-camp.pdf' },
   ],
   video: [],
 }
