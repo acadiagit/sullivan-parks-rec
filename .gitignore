@@ -60,3 +60,9 @@ public/*.fig
 
 # Local design work that shouldn't deploy
 source-donotpublish/
+
+# Affinity Designer source + lockfiles — never commit
+*.af
+*.af~lock~
+*.afpub
+*.afphoto
