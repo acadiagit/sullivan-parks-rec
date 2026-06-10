@@ -1,19 +1,37 @@
-// src/app/page.js
+// page.js
+// Path: ~/coworker/parks/src/app/page.js
+// Description: Home page. Hero, section cards, upcoming events + latest news.
+//              Reads from unified `content` table (events + news both live there).
+// ============================================================
 import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
+import { formatDate } from '@/lib/content'
 import { TreePine, CalendarDays, Users, FolderKanban, ArrowRight, MapPin, Clock } from 'lucide-react'
 
 export const revalidate = 60
 
 async function getHomeData() {
-  const [eventsRes, articlesRes] = await Promise.all([
-    supabase.from('events').select('*').eq('published', true).order('start_at').limit(3),
-    supabase.from('articles').select('id,title,excerpt,published_at').eq('published', true).order('published_at', {ascending:false}).limit(2),
+  const [eventsRes, newsRes] = await Promise.all([
+    supabase
+      .from('content')
+      .select('*')
+      .eq('type', 'event')
+      .eq('status', 'published')
+      .gte('start_at', new Date().toISOString())   // upcoming only
+      .order('start_at', { ascending: true })
+      .limit(3),
+    supabase
+      .from('content')
+      .select('*')
+      .eq('type', 'news')
+      .eq('status', 'published')
+      .order('created_at', { ascending: false })
+      .limit(2),
   ])
   return {
-    events:   eventsRes.data   ?? [],
-    articles: articlesRes.data ?? [],
+    events: eventsRes.data ?? [],
+    news:   newsRes.data   ?? [],
   }
 }
 
@@ -38,15 +56,8 @@ const catBadge = {
   Community:  'bg-yellow-100 text-yellow-800',
 }
 
-function fmtDate(ts) {
-  return new Date(ts).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})
-}
-function fmtTime(ts) {
-  return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})
-}
-
 export default async function HomePage() {
-  const { events, articles } = await getHomeData()
+  const { events, news } = await getHomeData()
 
   return (
     <div>
@@ -126,8 +137,8 @@ export default async function HomePage() {
                     <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${catBadge[ev.category]??'bg-gray-100 text-gray-600'}`}>{ev.category}</span>
                     <p className="font-semibold text-[#0A2342] text-sm mt-1">{ev.title}</p>
                     <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-gray-500">
-                      <span className="flex items-center gap-1"><CalendarDays size={11}/> {fmtDate(ev.start_at)}</span>
-                      <span className="flex items-center gap-1"><Clock size={11}/> {fmtTime(ev.start_at)}</span>
+                      <span className="flex items-center gap-1"><CalendarDays size={11}/> {formatDate(ev.start_at, 'date')}</span>
+                      <span className="flex items-center gap-1"><Clock size={11}/> {formatDate(ev.start_at, 'time')}</span>
                       {ev.location && <span className="flex items-center gap-1"><MapPin size={11}/> {ev.location}</span>}
                     </div>
                   </li>
@@ -142,19 +153,23 @@ export default async function HomePage() {
 
         <div className="lg:col-span-2">
           <h2 className="font-playfair text-xl text-[#0A2342] mb-4">Latest News</h2>
-          {articles.length === 0
+          {news.length === 0
             ? <p className="text-gray-400 text-sm">No news yet.</p>
             : (
               <ul className="space-y-5">
-                {articles.map((a) => (
-                  <li key={a.id} className="border-l-2 border-[#40BCD8] pl-4">
-                    <p className="text-[11px] text-gray-400 mb-0.5">
-                      {new Date(a.published_at).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}
-                    </p>
-                    <p className="font-semibold text-[#0A2342] text-sm leading-snug">{a.title}</p>
-                    <p className="text-xs text-gray-500 mt-1 leading-relaxed">{a.excerpt}</p>
-                  </li>
-                ))}
+                {news.map((n) => {
+                  // Prefer the editor-set publish date, fall back to created_at
+                  const dateValue = n.extras?.publish_date || n.created_at
+                  return (
+                    <li key={n.id} className="border-l-2 border-[#40BCD8] pl-4">
+                      <p className="text-[11px] text-gray-400 mb-0.5">
+                        {formatDate(dateValue, 'date')}
+                      </p>
+                      <p className="font-semibold text-[#0A2342] text-sm leading-snug">{n.title}</p>
+                      <p className="text-xs text-gray-500 mt-1 leading-relaxed">{n.summary}</p>
+                    </li>
+                  )
+                })}
               </ul>
             )
           }

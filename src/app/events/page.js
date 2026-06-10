@@ -1,10 +1,10 @@
-// src/app/events/page.js
+// page.js
 // Path: ~/coworker/parks/src/app/events/page.js
-// Description: Public upcoming events list. Each card links to /events/[slug]
-//              detail page. Archived events are filtered out. A subtle link at
-//              the bottom leads to the /events/archive page.
+// Description: Public events list. Reads from unified `content` table.
+//              Uses shared formatDate from content.js for TZ-aware uniform formatting.
+// ============================================================
 import { supabase } from '@/lib/supabase'
-import { TZ } from '@/lib/config'
+import { formatDate } from '@/lib/content'
 import { CalendarDays, MapPin, Clock, Tag, ChevronRight, Archive } from 'lucide-react'
 import Link from 'next/link'
 
@@ -14,10 +14,10 @@ export const revalidate = 60
 async function getEvents() {
   try {
     const { data, error } = await supabase
-      .from('events')
+      .from('content')
       .select('*')
-      .eq('published', true)
-      .is('archived_at', null)
+      .eq('type', 'event')
+      .eq('status', 'published')
       .gte('start_at', new Date(new Date().getFullYear(), 0, 1).toISOString())
       .order('start_at', { ascending: true })
     if (error) { console.error(error); return [] }
@@ -30,13 +30,6 @@ const catColors = {
   Recreation: 'bg-teal-100  text-teal-800',
   Programs:   'bg-blue-100  text-blue-800',
   Community:  'bg-yellow-100 text-yellow-800',
-}
-
-function formatDate(ts) {
-  return new Date(ts).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric', timeZone: TZ })
-}
-function formatTime(ts) {
-  return new Date(ts).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', timeZone: TZ })
 }
 
 export default async function EventsPage() {
@@ -72,12 +65,15 @@ export default async function EventsPage() {
                   </h2>
                 </div>
                 <div className="text-right text-sm font-bold text-[#1565C0] font-nunito">
-                  {formatDate(ev.start_at)}
+                  {formatDate(ev.start_at, 'date')}
                 </div>
               </div>
-              <p className="text-gray-600 text-sm leading-relaxed mt-3 mb-4">{ev.description}</p>
+              <p className="text-gray-600 text-sm leading-relaxed mt-3 mb-4">{ev.summary}</p>
               <div className="flex flex-wrap gap-4 text-xs text-gray-500">
-                <span className="flex items-center gap-1.5"><Clock size={13} className="text-[#F5C843]"/> {formatTime(ev.start_at)}{ev.end_at ? ` – ${formatTime(ev.end_at)}` : ''}</span>
+                <span className="flex items-center gap-1.5">
+                  <Clock size={13} className="text-[#F5C843]"/>
+                  {formatDate(ev.start_at, 'time')}{ev.end_at ? ` – ${formatDate(ev.end_at, 'time')}` : ''}
+                </span>
                 {ev.location && <span className="flex items-center gap-1.5"><MapPin size={13} className="text-[#F5C843]"/> {ev.location}</span>}
               </div>
             </article>

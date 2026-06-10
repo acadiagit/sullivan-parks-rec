@@ -1,10 +1,11 @@
-// src/app/events/archive/page.js
+// page.js
 // Path: ~/coworker/parks/src/app/events/archive/page.js
-// Description: Public read-only archive of past (archived) events. Cards display
-//              info inline only — they are intentionally NOT clickable because
-//              archived event detail pages (/events/[slug]) return 404.
+// Description: Public read-only archive of past (archived) events.
+//              Reads from unified `content` table, status='archived'.
+//              Cards are intentionally NOT clickable — archived detail pages return 404.
+// ============================================================
 import { supabase } from '@/lib/supabase'
-import { TZ } from '@/lib/config'
+import { formatDate } from '@/lib/content'
 import { Archive, MapPin, Clock, Tag, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
@@ -17,9 +18,10 @@ export const revalidate = 60
 async function getArchivedEvents() {
   try {
     const { data, error } = await supabase
-      .from('events')
+      .from('content')
       .select('*')
-      .not('archived_at', 'is', null)
+      .eq('type', 'event')
+      .eq('status', 'archived')
       .order('start_at', { ascending: false })
       .limit(200)
     if (error) { console.error(error); return [] }
@@ -32,13 +34,6 @@ const catColors = {
   Recreation: 'bg-teal-100  text-teal-800',
   Programs:   'bg-blue-100  text-blue-800',
   Community:  'bg-yellow-100 text-yellow-800',
-}
-
-function formatDate(ts) {
-  return new Date(ts).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric', timeZone: TZ })
-}
-function formatTime(ts) {
-  return new Date(ts).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', timeZone: TZ })
 }
 
 export default async function ArchivePage() {
@@ -79,14 +74,17 @@ export default async function ArchivePage() {
                 <h2 className="font-playfair text-xl text-[#0A2342]">{ev.title}</h2>
               </div>
               <div className="text-right text-sm font-bold text-gray-500 font-nunito">
-                {formatDate(ev.start_at)}
+                {formatDate(ev.start_at, 'date')}
               </div>
             </div>
-            {ev.description && (
-              <p className="text-gray-600 text-sm leading-relaxed mt-3 mb-4">{ev.description}</p>
+            {ev.summary && (
+              <p className="text-gray-600 text-sm leading-relaxed mt-3 mb-4">{ev.summary}</p>
             )}
             <div className="flex flex-wrap gap-4 text-xs text-gray-500">
-              <span className="flex items-center gap-1.5"><Clock size={13} className="text-gray-400"/> {formatTime(ev.start_at)}{ev.end_at ? ` – ${formatTime(ev.end_at)}` : ''}</span>
+              <span className="flex items-center gap-1.5">
+                <Clock size={13} className="text-gray-400"/>
+                {formatDate(ev.start_at, 'time')}{ev.end_at ? ` – ${formatDate(ev.end_at, 'time')}` : ''}
+              </span>
               {ev.location && <span className="flex items-center gap-1.5"><MapPin size={13} className="text-gray-400"/> {ev.location}</span>}
             </div>
           </article>

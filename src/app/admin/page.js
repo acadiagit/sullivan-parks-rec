@@ -1,4 +1,8 @@
-// src/app/admin/page.js
+// page.js
+// Path: ~/coworker/parks/src/app/admin/page.js
+// Description: Admin dashboard. Counts each content type from the unified `content`
+//              table plus the separate `parks` entity table.
+// ============================================================
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -7,24 +11,24 @@ import { TreePine, CalendarDays, Users, FolderKanban, Newspaper, ArrowRight } fr
 import Link from 'next/link'
 
 export default function AdminDashboard() {
-  const [counts, setCounts] = useState({ parks:0, events:0, programs:0, projects:0, articles:0 })
+  const [counts, setCounts] = useState({ parks:0, events:0, programs:0, projects:0, news:0 })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
-      const [parks, events, programs, projects, articles] = await Promise.all([
-        supabase.from('parks').select('id', {count:'exact', head:true}),
-        supabase.from('events').select('id', {count:'exact', head:true}),
-        supabase.from('programs').select('id', {count:'exact', head:true}),
-        supabase.from('projects').select('id', {count:'exact', head:true}),
-        supabase.from('articles').select('id', {count:'exact', head:true}),
+      const [parks, events, programs, projects, news] = await Promise.all([
+        supabase.from('parks')  .select('id', {count:'exact', head:true}),
+        supabase.from('content').select('id', {count:'exact', head:true}).eq('type', 'event'),
+        supabase.from('content').select('id', {count:'exact', head:true}).eq('type', 'program'),
+        supabase.from('content').select('id', {count:'exact', head:true}).eq('type', 'project'),
+        supabase.from('content').select('id', {count:'exact', head:true}).eq('type', 'news'),
       ])
       setCounts({
         parks:    parks.count    ?? 0,
         events:   events.count   ?? 0,
         programs: programs.count ?? 0,
         projects: projects.count ?? 0,
-        articles: articles.count ?? 0,
+        news:     news.count     ?? 0,
       })
       setLoading(false)
     }
@@ -36,7 +40,7 @@ export default function AdminDashboard() {
     { label:'Events',   count:counts.events,   href:'/admin/events',   Icon:CalendarDays, color:'bg-[#27A844]' },
     { label:'Programs', count:counts.programs, href:'/admin/programs', Icon:Users,        color:'bg-[#40BCD8]' },
     { label:'Projects', count:counts.projects, href:'/admin/projects', Icon:FolderKanban, color:'bg-[#0A2342]' },
-    { label:'News',     count:counts.articles, href:'/admin/news',     Icon:Newspaper,    color:'bg-[#FF7200]' },
+    { label:'News',     count:counts.news,     href:'/admin/news',     Icon:Newspaper,    color:'bg-[#FF7200]' },
   ]
 
   return (
@@ -65,9 +69,9 @@ export default function AdminDashboard() {
       <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5">
         <h2 className="font-semibold text-[#0A2342] text-sm mb-1">Quick tips</h2>
         <ul className="text-xs text-gray-600 space-y-1 list-disc list-inside">
-          <li>All content is <strong>draft by default</strong> — toggle Published when ready</li>
+          <li>New content is <strong>published immediately</strong> by default — archive to hide</li>
           <li>Changes appear on the public site within 60 seconds</li>
-          <li>Upload photos to Supabase Storage bucket <code className="bg-white px-1 rounded">parks-media</code></li>
+          <li>Upload photos to Supabase Storage bucket <code className="bg-white px-1 rounded">park-media</code></li>
         </ul>
       </div>
     </div>

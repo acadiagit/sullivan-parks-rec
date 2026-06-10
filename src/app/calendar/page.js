@@ -1,5 +1,11 @@
-// src/app/calendar/page.js
+// page.js
+// Path: ~/coworker/parks/src/app/calendar/page.js
+// Description: Month-grouped calendar of upcoming events. Reads from unified
+//              `content` table. Uses shared formatDate from content.js for times.
+// ============================================================
 import { supabase } from '@/lib/supabase'
+import { TZ } from '@/lib/config'
+import { formatDate } from '@/lib/content'
 import { Calendar, Clock, MapPin } from 'lucide-react'
 
 export const metadata = { title: 'Calendar' }
@@ -7,16 +13,15 @@ export const revalidate = 60
 
 async function getEvents() {
   const { data, error } = await supabase
-    .from('events')
+    .from('content')
     .select('*')
-    .eq('published', true)
-    .gte('start_at', new Date(new Date().getFullYear(), 0, 1).toISOString()) // current year forward
+    .eq('type', 'event')
+    .eq('status', 'published')
+    .gte('start_at', new Date(new Date().getFullYear(), 0, 1).toISOString())
     .order('start_at')
   if (error) { console.error(error); return [] }
   return data
 }
-
-const TZ = 'America/New_York'
 
 // Group events by month label e.g. "May 2026"
 function groupByMonth(events) {
@@ -61,12 +66,11 @@ export default async function CalendarPage() {
           <div className="space-y-3">
             {monthEvents.map((ev) => {
               const d = new Date(ev.start_at)
-              const day  = d.toLocaleDateString('en-US', { day: 'numeric', timeZone: TZ })
-              const mon  = d.toLocaleDateString('en-US', { month: 'short', timeZone: TZ }).toUpperCase()
-              const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: TZ })
-              const endTime = ev.end_at
-                ? new Date(ev.end_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: TZ })
-                : null
+              // Day bubble — specialized compact format (e.g., "JUN" / "9")
+              const day = d.toLocaleDateString('en-US', { day: 'numeric', timeZone: TZ })
+              const mon = d.toLocaleDateString('en-US', { month: 'short', timeZone: TZ }).toUpperCase()
+              const time    = formatDate(ev.start_at, 'time')
+              const endTime = ev.end_at ? formatDate(ev.end_at, 'time') : null
 
               return (
                 <div key={ev.id}

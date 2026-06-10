@@ -189,55 +189,55 @@ export async function restoreContent(id) {
 }
 
 // ── Display helpers ────────────────────────────────────────
-
-const DOW   = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-               'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+// All formatters are TZ-aware via TZ from @/lib/config (America/New_York).
+// Visual output is uniform across all callers — single source of truth.
+import { TZ } from '@/lib/config'
 
 /**
- * Format a date/time for human display. Falls back to '' for null/invalid input.
+ * Format a date/time for human display in Eastern Time.
+ * Returns '' for null/invalid input.
  * Formats:
- *   'long'      → 'Tue, Jun 9, 2026 · 2:30 PM'   (default)
- *   'date'      → 'Tue, Jun 9, 2026'
- *   'time'      → '2:30 PM'
- *   'short'     → 'Jun 9 · 2:30 PM'
- *   'iso-date'  → '2026-06-09'                    (machine-readable, e.g., for <input type="date">)
+ *   'long'      → 'Tue, June 10, 2026 · 2:30 PM'      (default — detail pages)
+ *   'date'      → 'Tue, June 10, 2026'                (card date corner)
+ *   'time'      → '2:30 PM'                           (card bottom row)
+ *   'short'     → 'Jun 10 · 2:30 PM'                  (calendar, tight spaces)
+ *   'iso-date'  → '2026-06-10'                        (machine-readable)
  */
 export function formatDate(input, format = 'long') {
   if (!input) return ''
   const d = input instanceof Date ? input : new Date(input)
   if (isNaN(d)) return ''
 
-  const dow   = DOW[d.getDay()]
-  const month = MONTH[d.getMonth()]
-  const day   = d.getDate()
-  const year  = d.getFullYear()
+  if (format === 'iso-date') return d.toISOString().slice(0, 10)
 
-  let hours = d.getHours()
-  const mins = d.getMinutes()
-  const ampm = hours >= 12 ? 'PM' : 'AM'
-  hours = hours % 12 || 12
-  const time = `${hours}:${String(mins).padStart(2, '0')} ${ampm}`
+  const dateLong  = d.toLocaleDateString('en-US', {
+    timeZone: TZ, weekday: 'short', month: 'long', day: 'numeric', year: 'numeric',
+  })
+  const dateShort = d.toLocaleDateString('en-US', {
+    timeZone: TZ, month: 'short', day: 'numeric',
+  })
+  const time      = d.toLocaleTimeString('en-US', {
+    timeZone: TZ, hour: 'numeric', minute: '2-digit',
+  })
 
   switch (format) {
-    case 'date':     return `${dow}, ${month} ${day}, ${year}`
-    case 'time':     return time
-    case 'short':    return `${month} ${day} · ${time}`
-    case 'iso-date': return d.toISOString().slice(0, 10)
+    case 'date':  return dateLong
+    case 'time':  return time
+    case 'short': return `${dateShort} · ${time}`
     case 'long':
-    default:         return `${dow}, ${month} ${day}, ${year} · ${time}`
+    default:      return `${dateLong} · ${time}`
   }
 }
 
 /**
- * Format a date range (e.g., for events spanning multiple days).
- * Examples:
- *   formatDateRange('2026-06-12T10:00', '2026-06-14T16:00')
- *     → 'Fri–Sun, Jun 12–14, 2026'
- *   formatDateRange('2026-06-09T10:00', '2026-06-09T14:00')
- *     → 'Tue, Jun 9, 2026 · 10:00 AM – 2:00 PM'
- *   formatDateRange('2026-06-09T10:00', null)
- *     → 'Tue, Jun 9, 2026 · 10:00 AM'
+ * Format a date range for human display.
+ * Examples (all Eastern Time):
+ *   formatDateRange('2026-06-12T14:00Z', '2026-06-14T20:00Z')
+ *     → 'Fri, June 12 – Sun, June 14, 2026'
+ *   formatDateRange('2026-06-10T14:00Z', '2026-06-10T18:00Z')
+ *     → 'Tue, June 10, 2026 · 10:00 AM – 2:00 PM'
+ *   formatDateRange('2026-06-10T14:00Z', null)
+ *     → 'Tue, June 10, 2026 · 10:00 AM'
  */
 export function formatDateRange(startInput, endInput) {
   if (!startInput) return ''
@@ -249,21 +249,29 @@ export function formatDateRange(startInput, endInput) {
   const end = new Date(endInput)
   if (isNaN(end)) return formatDate(start, 'long')
 
-  const sameDay = start.toDateString() === end.toDateString()
+  // Compare day in Eastern Time (not server-local time)
+  const startKey = start.toLocaleDateString('en-US', { timeZone: TZ })
+  const endKey   = end  .toLocaleDateString('en-US', { timeZone: TZ })
+  const sameDay  = startKey === endKey
 
   if (sameDay) {
     return `${formatDate(start, 'date')} · ${formatDate(start, 'time')} – ${formatDate(end, 'time')}`
   }
 
-  // Multi-day. Compact form: "Fri–Sun, Jun 12–14, 2026" when same month/year.
-  const sameMonth = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()
-  if (sameMonth) {
-    const dowStart = DOW[start.getDay()]
-    const dowEnd   = DOW[end.getDay()]
-    return `${dowStart}–${dowEnd}, ${MONTH[start.getMonth()]} ${start.getDate()}–${end.getDate()}, ${start.getFullYear()}`
+  // Multi-day. Compact form when same year.
+  const startYear = start.toLocaleDateString('en-US', { timeZone: TZ, year: 'numeric' })
+  const endYear   = end  .toLocaleDateString('en-US', { timeZone: TZ, year: 'numeric' })
+  if (startYear === endYear) {
+    const startShort = start.toLocaleDateString('en-US', {
+      timeZone: TZ, weekday: 'short', month: 'long', day: 'numeric',
+    })
+    const endShort   = end.toLocaleDateString('en-US', {
+      timeZone: TZ, weekday: 'short', month: 'long', day: 'numeric',
+    })
+    return `${startShort} – ${endShort}, ${endYear}`
   }
 
-  // Different months — spell each side out
+  // Different years — spell each side fully
   return `${formatDate(start, 'date')} – ${formatDate(end, 'date')}`
 }
 
