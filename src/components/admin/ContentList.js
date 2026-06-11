@@ -75,11 +75,13 @@ export default function ContentList({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <p className="text-sm text-gray-500">{rows.length} {rows.length === 1 ? 'item' : 'items'}</p>
-        <button onClick={() => setEditing('new')}
-                className="inline-flex items-center gap-2 bg-[#1565C0] text-white font-semibold
-                           text-sm px-4 py-2 rounded-full hover:bg-[#0A2342] transition-colors">
-          <Plus size={15}/> {addLabel}
-        </button>
+        {!editing && (
+          <button onClick={() => setEditing('new')}
+                  className="inline-flex items-center gap-2 bg-[#1565C0] text-white font-semibold
+                             text-sm px-4 py-2 rounded-full hover:bg-[#0A2342] transition-colors">
+            <Plus size={15}/> {addLabel}
+          </button>
+        )}
       </div>
 
       {/* Form */}

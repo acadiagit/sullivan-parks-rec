@@ -3,6 +3,8 @@
 // Description: Unified editor for content (event, program, news, park_info).
 //              Same shell as EventForm but field visibility driven by `type` prop.
 //              Type-specific fields go into the JSONB `extras` column.
+//              Category picker hidden for all types (showCategory:false) — rows
+//              default to 'community'. Re-enable by flipping showCategory back.
 // ============================================================
 'use client'
 import { useEffect, useState } from 'react'
@@ -23,10 +25,13 @@ const lbl = 'block text-xs font-semibold text-gray-600 mb-1'
 // ── Per-type configuration ────────────────────────────────────
 // Each type declares which sections appear and what type-specific
 // `extras` fields it needs.
+// NOTE: showCategory is false everywhere — categories are hidden from the UI
+// until the organization grows. The `categories` arrays are retained so
+// flipping showCategory back to true fully restores the picker.
 const TYPE_CONFIG = {
   event: {
     label:        'Event',
-    showCategory: true,
+    showCategory: false,
     showDates:    true,
     showLocation: true,
     showPark:     true,
@@ -36,7 +41,7 @@ const TYPE_CONFIG = {
   },
   program: {
     label:        'Program',
-    showCategory: true,
+    showCategory: false,
     showDates:    true,
     showLocation: true,
     showPark:     true,
@@ -51,7 +56,7 @@ const TYPE_CONFIG = {
   },
   news: {
     label:        'News',
-    showCategory: true,
+    showCategory: false,
     showDates:    false,
     showLocation: false,
     showPark:     false,
@@ -234,7 +239,7 @@ export default function ContentForm({ row, type = 'event', onSave, onCancel }) {
       summary:   form.summary || null,
       body_html: form.body_html || null,
       cover_url: form.cover_url || null,
-      category:  cfg.showCategory ? form.category : null,
+      category:  cfg.showCategory ? form.category : 'community',  // hidden → default 'community'
       park_id:   cfg.showPark     ? form.park_id  : null,
       start_at:  cfg.showDates    ? easternToUTC(form.start_at) : null,
       end_at:    cfg.showDates    ? easternToUTC(form.end_at)   : null,
