@@ -2,6 +2,7 @@
 // Path: ~/coworker/parks/src/app/calendar/page.js
 // Description: Month-grouped calendar of upcoming events. Reads from unified
 //              `content` table. Uses shared formatDate from content.js for times.
+//              Category badge hidden from public (re-enable when org grows).
 // ============================================================
 import { supabase } from '@/lib/supabase'
 import { TZ } from '@/lib/config'
@@ -32,14 +33,6 @@ function groupByMonth(events) {
     groups[label].push(ev)
   }
   return groups
-}
-
-const catColor = {
-  Volunteer:  'bg-green-100  text-green-800',
-  Recreation: 'bg-teal-100   text-teal-800',
-  Programs:   'bg-blue-100   text-blue-800',
-  Community:  'bg-yellow-100 text-yellow-800',
-  General:    'bg-gray-100   text-gray-600',
 }
 
 export default async function CalendarPage() {
@@ -84,11 +77,6 @@ export default async function CalendarPage() {
 
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className={`text-[10px] font-bold uppercase tracking-wider
-                                        px-2 py-0.5 rounded-full
-                                        ${catColor[ev.category] ?? catColor.General}`}>
-                        {ev.category}
-                      </span>
                       <span className="font-semibold text-[#0A2342] text-sm">{ev.title}</span>
                     </div>
                     <div className="flex flex-wrap gap-3 text-xs text-gray-500">

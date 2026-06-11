@@ -3,10 +3,11 @@
 // Description: Public read-only archive of past (archived) events.
 //              Reads from unified `content` table, status='archived'.
 //              Cards are intentionally NOT clickable — archived detail pages return 404.
+//              Category badge hidden from public (re-enable when org grows).
 // ============================================================
 import { supabase } from '@/lib/supabase'
 import { formatDate } from '@/lib/content'
-import { Archive, MapPin, Clock, Tag, ArrowLeft } from 'lucide-react'
+import { Archive, MapPin, Clock, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 export const metadata = {
@@ -27,13 +28,6 @@ async function getArchivedEvents() {
     if (error) { console.error(error); return [] }
     return data ?? []
   } catch (e) { console.error(e); return [] }
-}
-
-const catColors = {
-  Volunteer:  'bg-green-100 text-green-800',
-  Recreation: 'bg-teal-100  text-teal-800',
-  Programs:   'bg-blue-100  text-blue-800',
-  Community:  'bg-yellow-100 text-yellow-800',
 }
 
 export default async function ArchivePage() {
@@ -64,9 +58,6 @@ export default async function ArchivePage() {
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${catColors[ev.category] ?? 'bg-gray-100 text-gray-600'}`}>
-                    <Tag size={9}/> {ev.category}
-                  </span>
                   <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-gray-200 text-gray-600">
                     <Archive size={9}/> Archived
                   </span>

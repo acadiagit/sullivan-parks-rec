@@ -2,6 +2,7 @@
 // Path: ~/coworker/parks/src/app/events/[slug]/page.js
 // Description: Public event detail page. Reads from unified `content` table.
 //              Uses shared formatDate from content.js for TZ-aware uniform formatting.
+//              Category eyebrow hidden from public (re-enable when org grows).
 // ============================================================
 import { getContent, formatDate, formatDateRange } from '@/lib/content'
 import { notFound } from 'next/navigation'
@@ -41,9 +42,6 @@ export default async function EventDetailPage({ params }) {
           <ArrowLeft size={14}/> All events
         </Link>
 
-        <div className="text-[10px] font-bold uppercase tracking-wider text-[#27A844] mb-2">
-          {event.category}
-        </div>
         <h1 className="font-playfair text-4xl md:text-5xl text-[#0A2342] leading-tight mb-4">
           {event.title}
         </h1>

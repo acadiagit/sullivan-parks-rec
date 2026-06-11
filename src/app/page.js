@@ -2,6 +2,7 @@
 // Path: ~/coworker/parks/src/app/page.js
 // Description: Home page. Hero, section cards, upcoming events + latest news.
 //              Reads from unified `content` table (events + news both live there).
+//              Category badge hidden from public (re-enable when org grows).
 // ============================================================
 import Link from 'next/link'
 import Image from 'next/image'
@@ -48,13 +49,6 @@ const missionPoints = [
   'The committee will collaborate with other organizations and providers to enhance recreational programs offered by the town.',
   'The committee will be responsible for oversight of the Sullivan Daze Planning Committee.',
 ]
-
-const catBadge = {
-  Volunteer:  'bg-green-100 text-green-800',
-  Recreation: 'bg-teal-100  text-teal-800',
-  Programs:   'bg-blue-100  text-blue-800',
-  Community:  'bg-yellow-100 text-yellow-800',
-}
 
 export default async function HomePage() {
   const { events, news } = await getHomeData()
@@ -134,8 +128,7 @@ export default async function HomePage() {
               <ul className="space-y-3">
                 {events.map((ev) => (
                   <li key={ev.id} className="bg-white rounded-xl p-4 border border-[#EAF0FA] card-lift">
-                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${catBadge[ev.category]??'bg-gray-100 text-gray-600'}`}>{ev.category}</span>
-                    <p className="font-semibold text-[#0A2342] text-sm mt-1">{ev.title}</p>
+                    <p className="font-semibold text-[#0A2342] text-sm">{ev.title}</p>
                     <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-gray-500">
                       <span className="flex items-center gap-1"><CalendarDays size={11}/> {formatDate(ev.start_at, 'date')}</span>
                       <span className="flex items-center gap-1"><Clock size={11}/> {formatDate(ev.start_at, 'time')}</span>

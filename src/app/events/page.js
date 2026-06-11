@@ -2,10 +2,11 @@
 // Path: ~/coworker/parks/src/app/events/page.js
 // Description: Public events list. Reads from unified `content` table.
 //              Uses shared formatDate from content.js for TZ-aware uniform formatting.
+//              Category badge hidden from public (re-enable when org grows).
 // ============================================================
 import { supabase } from '@/lib/supabase'
 import { formatDate } from '@/lib/content'
-import { CalendarDays, MapPin, Clock, Tag, ChevronRight, Archive } from 'lucide-react'
+import { CalendarDays, MapPin, Clock, ChevronRight, Archive } from 'lucide-react'
 import Link from 'next/link'
 
 export const metadata = { title: 'Events' }
@@ -23,13 +24,6 @@ async function getEvents() {
     if (error) { console.error(error); return [] }
     return data ?? []
   } catch (e) { console.error(e); return [] }
-}
-
-const catColors = {
-  Volunteer:  'bg-green-100 text-green-800',
-  Recreation: 'bg-teal-100  text-teal-800',
-  Programs:   'bg-blue-100  text-blue-800',
-  Community:  'bg-yellow-100 text-yellow-800',
 }
 
 export default async function EventsPage() {
@@ -56,9 +50,6 @@ export default async function EventsPage() {
                                 group-focus-visible:ring-2 group-focus-visible:ring-[#1565C0]">
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div className="flex-1">
-                  <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2 ${catColors[ev.category] ?? 'bg-gray-100 text-gray-600'}`}>
-                    <Tag size={9}/> {ev.category}
-                  </span>
                   <h2 className="font-playfair text-xl text-[#0A2342] group-hover:text-[#1565C0] transition-colors flex items-center gap-1">
                     {ev.title}
                     <ChevronRight size={18} className="text-[#1565C0] opacity-0 group-hover:opacity-100 transition-opacity"/>
