@@ -110,6 +110,25 @@ export async function listUpcoming({ type = 'event', limit = null } = {}) {
   return data || []
 }
 
+/**
+ * Full-text search across all published content (any type).
+ * Delegates ranking + matching to the search_content() Postgres function
+ * (see db/phase3-search.sql) so search logic stays in one place with the data.
+ * Returns ranked rows (most relevant first); [] on empty query or error.
+ *
+ *   const hits = await searchContent('kayak ramp')
+ */
+export async function searchContent(rawQuery) {
+  const query = (rawQuery || '').trim()
+  if (!query) return []
+  const { data, error } = await supabase.rpc('search_content', { query })
+  if (error) {
+    console.error('searchContent error:', error)
+    return []
+  }
+  return data || []
+}
+
 // ── Writes (admin) ─────────────────────────────────────────
 
 /**
