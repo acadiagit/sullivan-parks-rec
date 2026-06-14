@@ -68,14 +68,20 @@ const TYPE_CONFIG = {
     ],
   },
   park_info: {
-    label:        'Park Info Page',
+    label:        'Park',
     showCategory: false,
     showDates:    false,
     showLocation: false,
-    showPark:     true,
-    parkRequired: true,
+    showPark:     false,        // parks ARE content now — no self-referential link
+    parkRequired: false,
     categories:   [],
-    extras:       [],
+    extras: [
+      { key: 'address',   label: 'Address',           type: 'text',   placeholder: '123 Shore Rd, Sullivan, ME' },
+      { key: 'hours',     label: 'Hours',             type: 'text',   placeholder: 'Dawn to dusk' },
+      { key: 'amenities', label: 'Amenities (commas)', type: 'text',  placeholder: 'Boat launch, Picnic tables, Trails' },
+      { key: 'lat',       label: 'Latitude',          type: 'number', placeholder: '44.5267' },
+      { key: 'lng',       label: 'Longitude',         type: 'number', placeholder: '-68.1234' },
+    ],
   },
   project: {
     label:        'Project',
