@@ -1,11 +1,14 @@
 // page.js
 // Path: ~/coworker/parks/src/app/parks/page.js
 // Description: Public parks & facilities list. Reads from unified `content`
-//              (type='park_info'). Park fields (address, hours, amenities) live
-//              in the JSONB `extras` column. Amenities is a comma-separated string.
+//              (type='park_info'). Each card links to /parks/[slug]. Park fields
+//              (address, hours, amenities) live in JSONB `extras`; amenities is
+//              a comma-separated string. (Address/map link lives on the detail
+//              page — a card-wide <Link> can't contain a nested <a>.)
 // ============================================================
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { TreePine, MapPin, Clock } from 'lucide-react'
+import { TreePine, MapPin, Clock, ChevronRight } from 'lucide-react'
 
 export const metadata = { title: 'Parks' }
 export const revalidate = 60
@@ -46,28 +49,31 @@ export default async function ParksPage() {
           const address   = park.extras?.address
           const hours     = park.extras?.hours
           return (
-            <article key={park.id} className="bg-white rounded-2xl border border-[#EAF0FA] p-6 card-lift">
-              <h2 className="font-playfair text-xl text-[#0A2342] mb-1">{park.title}</h2>
-              {park.summary && (
-                <p className="text-gray-600 text-sm leading-relaxed mb-4">{park.summary}</p>
-              )}
-              {amenities.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {amenities.map((a) => (
-                    <span key={a} className="text-xs bg-blue-50 text-[#1565C0] border border-blue-100 px-2.5 py-0.5 rounded-full font-semibold">{a}</span>
-                  ))}
+            <Link key={park.id} href={`/parks/${park.slug}`} className="block group">
+              <article className="bg-white rounded-2xl border border-[#EAF0FA] p-6 card-lift
+                                  transition-all group-hover:border-[#1565C0] group-hover:shadow-md">
+                <div className="flex items-start justify-between gap-4">
+                  <h2 className="font-playfair text-xl text-[#0A2342] mb-1 group-hover:text-[#1565C0] transition-colors">
+                    {park.title}
+                  </h2>
+                  <ChevronRight size={18} className="text-[#1565C0] opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-1"/>
                 </div>
-              )}
-              <div className="flex flex-col sm:flex-row gap-3 text-xs text-gray-500">
-                {hours && <span className="flex items-center gap-1.5"><Clock size={13} className="text-[#F5C843]"/> {hours}</span>}
-                {address && (
-                  <span className="flex items-center gap-1.5">
-                    <MapPin size={13} className="text-[#F5C843]"/>
-                    <a href={`https://maps.google.com/?q=${encodeURIComponent(address)}`} target="_blank" rel="noopener noreferrer" className="hover:text-[#1565C0] underline underline-offset-2">{address}</a>
-                  </span>
+                {park.summary && (
+                  <p className="text-gray-600 text-sm leading-relaxed mb-4">{park.summary}</p>
                 )}
-              </div>
-            </article>
+                {amenities.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {amenities.map((a) => (
+                      <span key={a} className="text-xs bg-blue-50 text-[#1565C0] border border-blue-100 px-2.5 py-0.5 rounded-full font-semibold">{a}</span>
+                    ))}
+                  </div>
+                )}
+                <div className="flex flex-col sm:flex-row gap-3 text-xs text-gray-500">
+                  {hours && <span className="flex items-center gap-1.5"><Clock size={13} className="text-[#F5C843]"/> {hours}</span>}
+                  {address && <span className="flex items-center gap-1.5"><MapPin size={13} className="text-[#F5C843]"/> {address}</span>}
+                </div>
+              </article>
+            </Link>
           )
         })}
       </div>
