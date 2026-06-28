@@ -209,10 +209,10 @@ export default function ContentForm({ row, type = 'event', onSave, onCancel }) {
   useEffect(() => {
     if (!cfg.showPark) return
     supabase
-      .from('parks')
-      .select('id, name, slug')
+      .from('content')
+      .select('id, title, slug').eq('type', 'park_info')
       .eq('status', 'published')
-      .order('sort_order', { ascending: true })
+      .order('title', { ascending: true })
       .then(({ data }) => setParks(data || []))
   }, [cfg.showPark])
 
@@ -352,7 +352,7 @@ export default function ContentForm({ row, type = 'event', onSave, onCancel }) {
                   onChange={e => set('park_id', e.target.value ? Number(e.target.value) : null)}
                   required={cfg.parkRequired}>
             <option value="">{cfg.parkRequired ? '— Choose a park —' : '— None / not linked to a park —'}</option>
-            {parks.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            {parks.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
           </select>
         </div>
       )}

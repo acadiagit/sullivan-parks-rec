@@ -25,7 +25,7 @@ export const CONTENT_TYPES = {
 export async function getContent({ type, slug, includeArchived = false }) {
   let query = supabase
     .from('content')
-    .select('*, parks(id, name, slug, address, lat, lng)')
+    .select('*')
     .eq('type', type)
     .eq('slug', slug)
 
@@ -47,7 +47,7 @@ export async function getContent({ type, slug, includeArchived = false }) {
 export async function getContentById(id) {
   const { data, error } = await supabase
     .from('content')
-    .select('*, parks(id, name, slug)')
+    .select('*')
     .eq('id', id)
     .single()
   if (error) return null
@@ -71,7 +71,7 @@ export async function listContent({
 } = {}) {
   let query = supabase
     .from('content')
-    .select('*, parks(id, name, slug)')
+    .select('*')
 
   if (type)   query = query.eq('type', type)
   if (status) query = query.eq('status', status)
@@ -95,7 +95,7 @@ export async function listContent({
 export async function listUpcoming({ type = 'event', limit = null } = {}) {
   let query = supabase
     .from('content')
-    .select('*, parks(id, name, slug)')
+    .select('*')
     .eq('type', type)
     .eq('status', 'published')
     .gte('start_at', new Date().toISOString())
