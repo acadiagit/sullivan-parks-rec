@@ -4,6 +4,7 @@ import Sidebar from '@/components/Sidebar'
 import TopNav from '@/components/TopNav'
 import Footer from '@/components/Footer'
 import './globals.css'
+import GoogleAnalytics from '@/components/GoogleAnalytics'
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -38,6 +39,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${playfair.variable} ${nunito.variable}`}>
       <body className="bg-cream min-h-screen">
+        <GoogleAnalytics />
         {/* Desktop sidebar — fixed left */}
         <Sidebar />
 
