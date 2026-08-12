@@ -4,12 +4,16 @@
 //              and status changes route through @/lib/content (single source of
 //              truth) — this component never queries Supabase directly. Driven by
 //              a `type` prop; pairs with <ContentForm> as the editor.
+//              Edit always re-fetches the row by id before opening the form —
+//              prevents a stale cached row (e.g. from a second tab) from
+//              silently overwriting a more recent save.
+//              Purge (permanent delete) is only offered on archived rows.
 // ============================================================
 'use client'
 
 import { useState, useEffect } from 'react'
-import { listContent, archiveContent, restoreContent, formatDate } from '@/lib/content'
-import { Plus, Pencil, Eye, EyeOff, Archive } from 'lucide-react'
+import { listContent, archiveContent, restoreContent, purgeContent, getContentById, formatDate } from '@/lib/content'
+import { Plus, Pencil, Eye, EyeOff, Archive, Trash2 } from 'lucide-react'
 
 // Generic CRUD list for any content type (event, program, news, project, park_info).
 // Props:
@@ -58,6 +62,30 @@ export default function ContentList({
           ? { ...r, status: updated.status, archived_at: updated.archived_at }
           : r
       ))
+    }
+  }
+
+  // Edit — always fetch the current row by id before opening the form.
+  // Prevents a stale cached row (e.g. from a second tab left open) from
+  // silently overwriting a more recent save when this form is submitted.
+  async function openEdit(row) {
+    setBusyId(row.id)
+    const fresh = await getContentById(row.id)
+    setBusyId(null)
+    setEditing(fresh || row)   // fall back to cached row only if the fetch itself failed
+  }
+
+  // Purge — permanent delete. Only ever offered on archived rows in the UI below.
+  async function purgeNow(row) {
+    const label = row[labelField] || row.title || '(untitled)'
+    if (!confirm(`Permanently delete "${label}"?\n\nThis cannot be undone — it will be removed completely, not just archived.`)) return
+    setBusyId(row.id)
+    const ok = await purgeContent(row.id)
+    setBusyId(null)
+    if (ok) {
+      setRows(rows.filter(r => r.id !== row.id))
+    } else {
+      alert('Purge failed. Check console for details.')
     }
   }
 
@@ -141,11 +169,20 @@ export default function ContentList({
                           : <Eye    size={17} className="text-green-500"/>}
                       </button>
 
-                      {/* Edit */}
-                      <button onClick={() => setEditing(row)}
-                              className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-[#1565C0] transition-colors">
+                      {/* Edit — fetches fresh row before opening */}
+                      <button onClick={() => openEdit(row)} disabled={busyId === row.id}
+                              className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-[#1565C0] transition-colors disabled:opacity-40">
                         <Pencil size={15}/>
                       </button>
+
+                      {/* Purge — permanent delete, archived rows only */}
+                      {archived && (
+                        <button onClick={() => purgeNow(row)} disabled={busyId === row.id}
+                                title="Permanently delete"
+                                className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-40">
+                          <Trash2 size={15}/>
+                        </button>
+                      )}
                     </div>
                   </div>
                 )

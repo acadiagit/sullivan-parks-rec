@@ -5,6 +5,14 @@
 //              Type-specific fields go into the JSONB `extras` column.
 //              Category picker hidden for all types (showCategory:false) — rows
 //              default to 'community'. Re-enable by flipping showCategory back.
+//              Conflict guard (Aug 11 2026): before saving an existing item,
+//              re-checks the DB's updated_at against what it was when this form
+//              opened. If it changed (e.g. saved from another tab in the
+//              meantime), warns before allowing an overwrite. This is a second
+//              line of defense on top of ContentList always fetching a fresh
+//              row before Edit opens — it specifically catches two tabs open
+//              to the SAME item at the SAME time, which a fetch-on-open alone
+//              can't prevent.
 // ============================================================
 'use client'
 import { useEffect, useState } from 'react'
@@ -12,6 +20,7 @@ import { supabase } from '@/lib/supabase'
 import { TZ } from '@/lib/config'
 import {
   upsertContent, archiveContent, restoreContent, slugify,
+  getLinkedParkIds, setLinkedParks, getContentById,
 } from '@/lib/content'
 import MediaPicker from './MediaPicker'
 import {
@@ -190,11 +199,16 @@ export default function ContentForm({ row, type = 'event', onSave, onCancel }) {
     start_at:    utcToEastern(row?.start_at),
     end_at:      utcToEastern(row?.end_at),
     location:    row?.location    ?? '',
-    park_id:     row?.park_id     ?? null,
+    park_ids:    [],
     status:      row?.status      ?? 'published',
     archived_at: row?.archived_at ?? null,
     extras:      row?.extras      ?? {},
   })
+
+  // Snapshot of updated_at at the moment this form opened — used by the
+  // conflict guard in save() to detect if this item changed elsewhere
+  // (e.g. saved from another tab) while this form was open.
+  const [loadedUpdatedAt] = useState(row?.updated_at ?? null)
 
   const [parks, setParks]         = useState([])
   const [saving, setSaving]       = useState(false)
@@ -216,6 +230,13 @@ export default function ContentForm({ row, type = 'event', onSave, onCancel }) {
       .then(({ data }) => setParks(data || []))
   }, [cfg.showPark])
 
+  // Load this item's existing park/asset links (many-to-many, so a separate
+  // async fetch rather than something derivable from `row` synchronously)
+  useEffect(() => {
+    if (!cfg.showPark || !row?.id) return
+    getLinkedParkIds(row.id).then(ids => set('park_ids', ids))
+  }, [cfg.showPark, row?.id])
+
   const isArchived = form.status === 'archived'
   const bodyMedia  = parseBodyMedia(form.body_html)
 
@@ -232,12 +253,40 @@ export default function ContentForm({ row, type = 'event', onSave, onCancel }) {
     e?.preventDefault?.()
     setError(null)
 
-    if (cfg.parkRequired && !form.park_id) {
-      setError('Please choose a park for this info page.')
+    if (cfg.parkRequired && form.park_ids.length === 0) {
+      setError('Please choose at least one park for this info page.')
       return
     }
 
     setSaving(true)
+
+    // ── Conflict guard ──────────────────────────────────────────
+    // If editing an existing item, re-check the DB's current updated_at
+    // against the snapshot taken when this form opened. A mismatch means
+    // this item was saved elsewhere (typically another tab) while this
+    // form was sitting open — proceeding would silently overwrite that
+    // newer save. This complements (doesn't replace) ContentList always
+    // fetching a fresh row before Edit opens: that guards against a STALE
+    // tab reopened later; this guards against two tabs open to the SAME
+    // item AT THE SAME TIME.
+    if (row?.id) {
+      const current = await getContentById(row.id)
+      if (current && loadedUpdatedAt && current.updated_at !== loadedUpdatedAt) {
+        const proceed = confirm(
+          `This ${cfg.label.toLowerCase()} was updated elsewhere since you opened it ` +
+          `(likely another browser tab).\n\n` +
+          `Saving now will OVERWRITE those changes.\n\n` +
+          `Click OK to overwrite anyway, or Cancel to stop — then close and reopen ` +
+          `this ${cfg.label.toLowerCase()} to see the latest version before editing again.`
+        )
+        if (!proceed) {
+          setSaving(false)
+          setError('Save cancelled to avoid overwriting a newer version. Reopen this item to continue editing.')
+          return
+        }
+      }
+    }
+
     const payload = {
       type,
       title:     form.title,
@@ -246,7 +295,6 @@ export default function ContentForm({ row, type = 'event', onSave, onCancel }) {
       body_html: form.body_html || null,
       cover_url: form.cover_url || null,
       category:  cfg.showCategory ? form.category : 'community',  // hidden → default 'community'
-      park_id:   cfg.showPark     ? form.park_id  : null,
       start_at:  cfg.showDates    ? easternToUTC(form.start_at) : null,
       end_at:    cfg.showDates    ? easternToUTC(form.end_at)   : null,
       location:  cfg.showLocation ? (form.location || null)     : null,
@@ -254,11 +302,27 @@ export default function ContentForm({ row, type = 'event', onSave, onCancel }) {
       extras:    form.extras || {},
     }
     if (row?.id) payload.id = row.id
+    // Note: legacy single-value `park_id` column is intentionally no longer
+    // written here — park/asset links now live in content_parks (many-to-many).
 
     const result = await upsertContent(payload)
+    if (!result) {
+      setSaving(false)
+      setError('Save failed. Check console for details.')
+      return
+    }
+
+    if (cfg.showPark) {
+      const linked = await setLinkedParks(result.id, form.park_ids)
+      if (!linked) {
+        setSaving(false)
+        setError('Content saved, but park links failed to update. Check console for details.')
+        return
+      }
+    }
+
     setSaving(false)
-    if (result) onSave()
-    else setError('Save failed. Check console for details.')
+    onSave()
   }
 
   async function archiveNow() {
@@ -344,16 +408,33 @@ export default function ContentForm({ row, type = 'event', onSave, onCancel }) {
         )}
       </div>
 
-      {/* Optional Park selector */}
+      {/* Park / asset links (many-to-many) */}
       {cfg.showPark && (
         <div>
-          <label className={lbl}>Park{cfg.parkRequired ? ' *' : ''}</label>
-          <select className={inp} value={form.park_id ?? ''}
-                  onChange={e => set('park_id', e.target.value ? Number(e.target.value) : null)}
-                  required={cfg.parkRequired}>
-            <option value="">{cfg.parkRequired ? '— Choose a park —' : '— None / not linked to a park —'}</option>
-            {parks.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
-          </select>
+          <label className={lbl}>Parks / assets{cfg.parkRequired ? ' *' : ''}</label>
+          <div className="border border-[#EAF0FA] rounded-lg p-3 max-h-40 overflow-y-auto space-y-1.5 bg-white">
+            {parks.length === 0 && (
+              <p className="text-xs text-gray-400 italic">No parks published yet.</p>
+            )}
+            {parks.map(p => (
+              <label key={p.id} className="flex items-center gap-2 text-sm text-[#0A2342] cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={form.park_ids.includes(p.id)}
+                  onChange={e => {
+                    const next = e.target.checked
+                      ? [...form.park_ids, p.id]
+                      : form.park_ids.filter(id => id !== p.id)
+                    set('park_ids', next)
+                  }}
+                />
+                {p.title}
+              </label>
+            ))}
+          </div>
+          {form.park_ids.length > 0 && (
+            <p className="text-xs text-gray-500 mt-1">{form.park_ids.length} linked</p>
+          )}
         </div>
       )}
 

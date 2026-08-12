@@ -207,6 +207,82 @@ export async function restoreContent(id) {
   return data
 }
 
+// ── Park/asset links (many-to-many via content_parks) ──────
+
+/**
+ * Fetch the park/asset ids linked to a content item.
+ *
+ *   const ids = await getLinkedParkIds(20)   // → [23]
+ */
+export async function getLinkedParkIds(contentId) {
+  if (!contentId) return []
+  const { data, error } = await supabase
+    .from('content_parks')
+    .select('park_id')
+    .eq('content_id', contentId)
+  if (error) {
+    console.error('getLinkedParkIds error:', error)
+    return []
+  }
+  return (data || []).map(r => r.park_id)
+}
+
+/**
+ * Replace all park/asset links for a content item with the given list.
+ * Diffs against current links so only the actual add/remove rows are
+ * written — calling this with the same list twice is a no-op on the 2nd call.
+ * Returns true on success, false if any write failed.
+ *
+ *   await setLinkedParks(20, [23, 24])
+ */
+export async function setLinkedParks(contentId, parkIds) {
+  if (!contentId) return false
+  const existing = await getLinkedParkIds(contentId)
+  const toAdd    = parkIds.filter(id => !existing.includes(id))
+  const toRemove = existing.filter(id => !parkIds.includes(id))
+
+  if (toRemove.length) {
+    const { error } = await supabase
+      .from('content_parks')
+      .delete()
+      .eq('content_id', contentId)
+      .in('park_id', toRemove)
+    if (error) {
+      console.error('setLinkedParks remove error:', error)
+      return false
+    }
+  }
+  if (toAdd.length) {
+    const { error } = await supabase
+      .from('content_parks')
+      .insert(toAdd.map(park_id => ({ content_id: contentId, park_id })))
+    if (error) {
+      console.error('setLinkedParks add error:', error)
+      return false
+    }
+  }
+  return true
+}
+
+/**
+ * Permanently delete a content record and its park/asset links.
+ * Irreversible — unlike archiveContent, there is no restore path.
+ * Only call this on already-archived rows from the UI.
+ *
+ *   await purgeContent(20)
+ */
+export async function purgeContent(id) {
+  if (!id) return false
+  // content_parks has a FK to content.id — clean up links first
+  await supabase.from('content_parks').delete().eq('content_id', id)
+  const { error } = await supabase.from('content').delete().eq('id', id)
+  if (error) {
+    console.error('purgeContent error:', error)
+    return false
+  }
+  return true
+}
+
 // ── Display helpers ────────────────────────────────────────
 // All formatters are TZ-aware via TZ from @/lib/config (America/New_York).
 // Visual output is uniform across all callers — single source of truth.
