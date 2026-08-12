@@ -66,3 +66,4 @@ source-donotpublish/
 *.af~lock~
 *.afpub
 *.afphoto
+.env*
