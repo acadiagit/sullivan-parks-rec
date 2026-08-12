@@ -1,24 +1,38 @@
-// src/app/programs/page.js
+// page.js
+// Path: ~/coworker/parks/src/app/programs/page.js
+// Description: Public programs list. Reads from unified `content` table.
+//              Mirrors events/page.js pattern. Sorted newest-updated first.
+// ============================================================
 import { supabase } from '@/lib/supabase'
-import { Users, ChevronRight } from 'lucide-react'
+import { formatDate } from '@/lib/content'
+import { Users, Clock, MapPin, DollarSign, ChevronRight, Archive } from 'lucide-react'
+import Link from 'next/link'
 
 export const metadata = { title: 'Programs' }
 export const revalidate = 60
 
 async function getPrograms() {
-  const { data, error } = await supabase
-    .from('programs').select('*').eq('published', true).order('sort_order')
-  if (error) { console.error(error); return [] }
-  return data
+  try {
+    const { data, error } = await supabase
+      .from('content')
+      .select('*')
+      .eq('type', 'program')
+      .eq('status', 'published')
+      .order('updated_at', { ascending: false })
+    if (error) { console.error(error); return [] }
+    return data ?? []
+  } catch (e) { console.error(e); return [] }
 }
 
-const groupColor = { Youth:'bg-[#1565C0]', Adult:'bg-[#27A844]', Senior:'bg-[#40BCD8]', General:'bg-[#0A2342]' }
-const statusBadge = { 'Open':'bg-green-100 text-green-700', 'Coming Soon':'bg-yellow-100 text-yellow-700', 'Full':'bg-red-50 text-red-600', 'Closed':'bg-gray-100 text-gray-500' }
+function formatFee(cents) {
+  if (cents === null || cents === undefined || cents === '') return null
+  const n = Number(cents)
+  if (isNaN(n)) return null
+  return n === 0 ? 'Free' : `$${(n / 100).toFixed(2)}`
+}
 
 export default async function ProgramsPage() {
   const programs = await getPrograms()
-  const groups = [...new Set(programs.map(p => p.group_label))]
-
   return (
     <div className="max-w-4xl mx-auto px-6 lg:px-10 py-10">
       <div className="flex items-center gap-3 mb-2">
@@ -26,29 +40,58 @@ export default async function ProgramsPage() {
         <h1 className="font-playfair text-3xl text-[#0A2342]">Programs</h1>
       </div>
       <p className="text-gray-600 mb-8 max-w-2xl">Recreation and wellness programs for all ages.</p>
+
       {programs.length === 0 && <p className="text-gray-400 text-sm">No programs listed yet.</p>}
-      <div className="space-y-8">
-        {groups.map((group) => (
-          <div key={group}>
-            <div className={`inline-flex items-center gap-2 ${groupColor[group] ?? 'bg-gray-700'} text-white text-sm font-semibold px-4 py-1.5 rounded-full mb-4`}>
-              {group} Programs
-            </div>
-            <div className="space-y-3">
-              {programs.filter(p => p.group_label === group).map((p) => (
-                <div key={p.id} className="bg-white rounded-xl border border-[#EAF0FA] px-5 py-4 flex items-center justify-between gap-4 card-lift">
-                  <div>
-                    <p className="font-semibold text-[#0A2342] text-sm">{p.name}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Ages {p.age_range} · {p.season}</p>
+
+      <div className="space-y-5">
+        {programs.map((p) => {
+          const extras = p.extras || {}
+          const fee = formatFee(extras.fee_cents)
+          return (
+            <Link key={p.id} href={`/programs/${p.slug}`} className="block group">
+              <article className="bg-white rounded-2xl border border-[#EAF0FA] p-6 transition-all
+                                  hover:border-[#1565C0] hover:shadow-md hover:-translate-y-0.5
+                                  group-focus-visible:ring-2 group-focus-visible:ring-[#1565C0]">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div className="flex-1">
+                    <h2 className="font-playfair text-xl text-[#0A2342] group-hover:text-[#1565C0] transition-colors flex items-center gap-1">
+                      {p.title}
+                      <ChevronRight size={18} className="text-[#1565C0] opacity-0 group-hover:opacity-100 transition-opacity"/>
+                    </h2>
+                    {extras.age_range && (
+                      <p className="text-xs text-gray-500 mt-0.5">Ages {extras.age_range}</p>
+                    )}
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className={`text-[10px] font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-full ${statusBadge[p.status] ?? 'bg-gray-100 text-gray-500'}`}>{p.status}</span>
-                    <ChevronRight size={16} className="text-gray-400"/>
-                  </div>
+                  {fee && (
+                    <div className="text-right text-sm font-bold text-[#1565C0] font-nunito">{fee}</div>
+                  )}
                 </div>
-              ))}
-            </div>
-          </div>
-        ))}
+                {p.summary && (
+                  <p className="text-gray-600 text-sm leading-relaxed mt-3 mb-4">{p.summary}</p>
+                )}
+                <div className="flex flex-wrap gap-4 text-xs text-gray-500">
+                  {extras.schedule_text && (
+                    <span className="flex items-center gap-1.5">
+                      <Clock size={13} className="text-[#F5C843]"/> {extras.schedule_text}
+                    </span>
+                  )}
+                  {p.location && (
+                    <span className="flex items-center gap-1.5">
+                      <MapPin size={13} className="text-[#F5C843]"/> {p.location}
+                    </span>
+                  )}
+                </div>
+              </article>
+            </Link>
+          )
+        })}
+      </div>
+
+      <div className="mt-12 pt-6 border-t border-[#EAF0FA] text-center">
+        <Link href="/programs/archive"
+              className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#1565C0] transition-colors">
+          <Archive size={14}/> View past programs →
+        </Link>
       </div>
     </div>
   )
