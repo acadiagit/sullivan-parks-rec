@@ -1,11 +1,15 @@
-// src/components/Footer.js
+// Footer.js
+// Path: src/components/Footer.js
+// Site footer: brand blurb, Sullivan Town Office contact block, and Partners link list.
 import Link from 'next/link'
 import { MapPin, Phone, Mail } from 'lucide-react'
 
 const partners = [
-  { name: 'Town of Sullivan',         url: 'https://sullivanmaine.org'              },
-  { name: 'Frenchman Bay Conservancy',url: 'https://frenchmanbay.org'               },
-  { name: 'Maine State Parks',        url: 'https://www.maine.gov/dacf/parks/'      },
+  { name: 'Age Friendly Sullivan',           url: 'https://sullivanmaine.org/age-friendly-sullivan/' },
+  { name: 'RSU24 Adult Education',           url: 'https://rsu24.maineadulted.org'                   },
+  { name: 'Friends of Taunton Bay',          url: 'https://friendsoftauntonbay.org'                  },
+  { name: 'Frenchman\'s Bay Library',        url: 'https://frenchmansbaylibrary.org'                 },
+  { name: 'Schoodic Gateway Events Center',  url: 'https://www.schoodicevents.org'                   },
 ]
 
 export default function Footer() {
@@ -31,7 +35,12 @@ export default function Footer() {
 
         {/* Town address */}
         <div>
-          <h4 className="section-label mb-3">Town Office</h4>
+          <h4 className="section-label mb-3">
+            <a href="https://sullivanmaine.org" target="_blank" rel="noopener noreferrer"
+               className="hover:text-white transition-colors">
+              Sullivan Town Office
+            </a>
+          </h4>
           <address className="not-italic text-sm space-y-2 text-blue-300">
             <div className="flex items-start gap-2">
               <MapPin size={14} className="mt-0.5 shrink-0 text-[#F5C843]"/>
