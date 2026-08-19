@@ -17,7 +17,7 @@ export default function ContactPage() {
             <a href="tel:+12074226282" className="hover:text-[#1565C0]">207-422-6282</a>
           </div>
           <div className="flex items-center gap-3"><Mail size={16} className="text-[#F5C843] shrink-0"/>
-            <a href="mailto:townclerk@sullivanmaine.org" className="hover:text-[#1565C0]">townclerk@sullivanmaine.org</a>
+            <a href="mailto:Parks_Rec@sullivanmaine.org" className="hover:text-[#1565C0]">Parks_Rec@sullivanmaine.org</a>
           </div>
           <div className="flex items-start gap-3"><Clock size={16} className="text-[#F5C843] mt-0.5 shrink-0"/>
             <span>Mon–Thu 7:30 am – 5:00 pm<br/><span className="text-xs text-gray-400">Closed 1:00–1:30 pm</span></span>
