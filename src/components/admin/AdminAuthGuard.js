@@ -97,7 +97,6 @@ function AdminSidebar() {
     { href: '/admin/events',   label: 'Events'      },
     { href: '/admin/programs', label: 'Programs'    },
     { href: '/admin/projects', label: 'Projects'    },
-    { href: '/admin/news',     label: 'News'        },
   ]
   return (
     <aside className="fixed left-0 top-14 bottom-0 w-56 bg-white border-r border-[#EAF0FA]

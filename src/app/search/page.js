@@ -14,7 +14,6 @@ export const dynamic = 'force-dynamic'   // results depend on the query string
 const TYPE_META = {
   event:     { label: 'Event',   href: s => `/events/${s}`,   badge: 'bg-green-100 text-green-800'  },
   program:   { label: 'Program', href: s => `/programs/${s}`, badge: 'bg-blue-100 text-blue-800'    },
-  news:      { label: 'News',    href: s => `/news/${s}`,     badge: 'bg-yellow-100 text-yellow-800'},
   project:   { label: 'Project', href: s => `/projects/${s}`, badge: 'bg-slate-100 text-slate-700'  },
   park_info: { label: 'Park',    href: s => `/parks/${s}`,    badge: 'bg-teal-100 text-teal-800'    },
 }
@@ -22,20 +21,21 @@ const TYPE_META = {
 export default async function SearchPage({ searchParams }) {
   const params = await searchParams                 // works in Next 14 & 15
   const q = (params?.q || '').trim()
-  const results = q ? await searchContent(q) : []
+  // Only show types that have a public page (drops any leftover retired types).
+  const results = q ? (await searchContent(q)).filter(r => TYPE_META[r.type]) : []
 
   return (
     <div className="px-6 lg:px-10 py-10 max-w-3xl mx-auto">
       <h1 className="font-playfair text-2xl text-[#0A2342] mb-5">Search</h1>
 
       <div className="mb-8">
-        <SearchBox defaultValue={q} autoFocus placeholder="Search events, programs, news…" />
+        <SearchBox defaultValue={q} autoFocus placeholder="Search events, programs, projects…" />
       </div>
 
       {/* No query yet */}
       {!q && (
         <p className="text-sm text-gray-500">
-          Search across events, programs, news, and projects. Try a place
+          Search across events, programs, projects, and parks. Try a place
           (“Tunk Lake”), an activity (“kayak”), or a season (“summer”).
         </p>
       )}

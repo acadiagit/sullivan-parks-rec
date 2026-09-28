@@ -1,6 +1,6 @@
 // ContentForm.js
 // Path: ~/coworker/parks/src/components/admin/ContentForm.js
-// Description: Unified editor for content (event, program, news, park_info).
+// Description: Unified editor for content (event, program, park_info, project).
 //              Same shell as EventForm but field visibility driven by `type` prop.
 //              Type-specific fields go into the JSONB `extras` column.
 //              Category picker hidden for all types (showCategory:false) — rows
@@ -61,19 +61,6 @@ const TYPE_CONFIG = {
       { key: 'age_range',        label: 'Age range',        type: 'text',   placeholder: '8–14' },
       { key: 'fee_cents',        label: 'Fee (cents)',      type: 'number', placeholder: '5000 = $50.00' },
       { key: 'registration_url', label: 'Registration URL', type: 'url',    placeholder: 'https://…' },
-    ],
-  },
-  news: {
-    label:        'News',
-    showCategory: false,
-    showDates:    false,
-    showLocation: false,
-    showPark:     false,
-    parkRequired: false,
-    categories:   ['Announcement','Press','Update','General'],
-    extras: [
-      { key: 'publish_date', label: 'Publish date', type: 'date' },
-      { key: 'author',       label: 'Author',       type: 'text', placeholder: 'Hugo Diaz' },
     ],
   },
   park_info: {

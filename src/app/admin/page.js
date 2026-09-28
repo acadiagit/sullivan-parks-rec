@@ -7,28 +7,26 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { TreePine, CalendarDays, Users, FolderKanban, Newspaper, ArrowRight } from 'lucide-react'
+import { TreePine, CalendarDays, Users, FolderKanban, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
 export default function AdminDashboard() {
-  const [counts, setCounts] = useState({ parks:0, events:0, programs:0, projects:0, news:0 })
+  const [counts, setCounts] = useState({ parks:0, events:0, programs:0, projects:0 })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
-      const [parks, events, programs, projects, news] = await Promise.all([
+      const [parks, events, programs, projects] = await Promise.all([
         supabase.from('parks')  .select('id', {count:'exact', head:true}),
         supabase.from('content').select('id', {count:'exact', head:true}).eq('type', 'event'),
         supabase.from('content').select('id', {count:'exact', head:true}).eq('type', 'program'),
         supabase.from('content').select('id', {count:'exact', head:true}).eq('type', 'project'),
-        supabase.from('content').select('id', {count:'exact', head:true}).eq('type', 'news'),
       ])
       setCounts({
         parks:    parks.count    ?? 0,
         events:   events.count   ?? 0,
         programs: programs.count ?? 0,
         projects: projects.count ?? 0,
-        news:     news.count     ?? 0,
       })
       setLoading(false)
     }
@@ -40,7 +38,6 @@ export default function AdminDashboard() {
     { label:'Events',   count:counts.events,   href:'/admin/events',   Icon:CalendarDays, color:'bg-[#27A844]' },
     { label:'Programs', count:counts.programs, href:'/admin/programs', Icon:Users,        color:'bg-[#40BCD8]' },
     { label:'Projects', count:counts.projects, href:'/admin/projects', Icon:FolderKanban, color:'bg-[#0A2342]' },
-    { label:'News',     count:counts.news,     href:'/admin/news',     Icon:Newspaper,    color:'bg-[#FF7200]' },
   ]
 
   return (

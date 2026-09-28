@@ -15,9 +15,9 @@ import { useState, useEffect } from 'react'
 import { listContent, archiveContent, restoreContent, purgeContent, getContentById, formatDate } from '@/lib/content'
 import { Plus, Pencil, Eye, EyeOff, Archive, Trash2 } from 'lucide-react'
 
-// Generic CRUD list for any content type (event, program, news, project, park_info).
+// Generic CRUD list for any content type (event, program, project, park_info).
 // Props:
-//   type          content discriminator ('event' | 'program' | 'news' | 'project' | 'park_info')
+//   type          content discriminator ('event' | 'program' | 'project' | 'park_info')
 //   columns       [{ key, label }] extra fields shown under the title
 //   labelField    primary field for the row title (default 'title')
 //   addLabel      label for the add button

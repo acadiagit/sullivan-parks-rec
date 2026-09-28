@@ -1,7 +1,7 @@
 // page.js
 // Path: ~/coworker/parks/src/app/page.js
-// Description: Home page. Hero, section cards, upcoming events + latest news.
-//              Reads from unified `content` table (events + news both live there).
+// Description: Home page. Hero, section cards, upcoming events.
+//              Reads upcoming events from the unified `content` table.
 //              Category badge hidden from public (re-enable when org grows).
 // ============================================================
 import Link from 'next/link'
@@ -13,27 +13,15 @@ import { TreePine, CalendarDays, Users, FolderKanban, ArrowRight, MapPin, Clock 
 export const revalidate = 60
 
 async function getHomeData() {
-  const [eventsRes, newsRes] = await Promise.all([
-    supabase
-      .from('content')
-      .select('*')
-      .eq('type', 'event')
-      .eq('status', 'published')
-      .gte('start_at', new Date().toISOString())   // upcoming only
-      .order('start_at', { ascending: true })
-      .limit(3),
-    supabase
-      .from('content')
-      .select('*')
-      .eq('type', 'news')
-      .eq('status', 'published')
-      .order('created_at', { ascending: false })
-      .limit(2),
-  ])
-  return {
-    events: eventsRes.data ?? [],
-    news:   newsRes.data   ?? [],
-  }
+  const eventsRes = await supabase
+    .from('content')
+    .select('*')
+    .eq('type', 'event')
+    .eq('status', 'published')
+    .gte('start_at', new Date().toISOString())   // upcoming only
+    .order('start_at', { ascending: true })
+    .limit(3)
+  return { events: eventsRes.data ?? [] }
 }
 
 const sections = [
@@ -51,7 +39,7 @@ const missionPoints = [
 ]
 
 export default async function HomePage() {
-  const { events, news } = await getHomeData()
+  const { events } = await getHomeData()
 
   return (
     <div>
@@ -113,9 +101,9 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── EVENTS + NEWS ────────────────────────────── */}
-      <section className="px-6 lg:px-10 pb-14 max-w-5xl mx-auto grid lg:grid-cols-5 gap-8">
-        <div className="lg:col-span-3">
+      {/* ── UPCOMING EVENTS ─────────────────────────── */}
+      <section className="px-6 lg:px-10 pb-14 max-w-5xl mx-auto">
+        <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-playfair text-xl text-[#0A2342]">Upcoming Events</h2>
             <Link href="/events" className="text-xs font-semibold text-[#1565C0] hover:text-[#27A844] flex items-center gap-1 transition-colors">
@@ -144,29 +132,6 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        <div className="lg:col-span-2">
-          <h2 className="font-playfair text-xl text-[#0A2342] mb-4">Latest News</h2>
-          {news.length === 0
-            ? <p className="text-gray-400 text-sm">No news yet.</p>
-            : (
-              <ul className="space-y-5">
-                {news.map((n) => {
-                  // Prefer the editor-set publish date, fall back to created_at
-                  const dateValue = n.extras?.publish_date || n.created_at
-                  return (
-                    <li key={n.id} className="border-l-2 border-[#40BCD8] pl-4">
-                      <p className="text-[11px] text-gray-400 mb-0.5">
-                        {formatDate(dateValue, 'date')}
-                      </p>
-                      <p className="font-semibold text-[#0A2342] text-sm leading-snug">{n.title}</p>
-                      <p className="text-xs text-gray-500 mt-1 leading-relaxed">{n.summary}</p>
-                    </li>
-                  )
-                })}
-              </ul>
-            )
-          }
-        </div>
       </section>
     </div>
   )

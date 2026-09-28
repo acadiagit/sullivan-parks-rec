@@ -1,6 +1,6 @@
 // content.js
 // Path: src/lib/content.js
-// Desc: Shared helpers for unified content (events, programs, news, park_info).
+// Desc: Shared helpers for unified content (events, programs, projects, park_info).
 //       All reads/writes hit the `content` table. Formatting helpers for display.
 // ============================================================
 import { supabase } from '@/lib/supabase'
@@ -9,7 +9,6 @@ import { supabase } from '@/lib/supabase'
 export const CONTENT_TYPES = {
   EVENT:     'event',
   PROGRAM:   'program',
-  NEWS:      'news',
   PARK_INFO: 'park_info',
   PROJECT:   'project',
 }
